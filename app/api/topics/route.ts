@@ -24,7 +24,7 @@ export async function GET(req: Request) {
       },
     ],
     temperature: 0.9,
-    maxTokens: 800,
+    maxOutputTokens: 800,
   });
 
   let fullContent = '';
