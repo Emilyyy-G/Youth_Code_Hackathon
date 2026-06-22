@@ -82,7 +82,6 @@ export function DebateLayout() {
     const isHumanVsAi = state.phase === 'human-vs-ai';
 
     if (isRoundComplete(state.messages, state.currentRound)) {
-      if (state.currentRound >= MAX_ROUNDS) return;
       dispatch({ type: 'SET_PHASE', phase: 'scoring' });
       return;
     }
@@ -92,7 +91,6 @@ export function DebateLayout() {
     );
 
     if (nextSpeaker === null) {
-      if (state.currentRound >= MAX_ROUNDS) return;
       dispatch({ type: 'SET_PHASE', phase: 'scoring' });
       return;
     }

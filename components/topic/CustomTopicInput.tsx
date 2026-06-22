@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useDebate } from '@/lib/store/debate-context';
+import { t } from '@/lib/debate/i18n';
 import { Button } from '@/components/shared/Button';
 
 interface CustomTopicInputProps {
@@ -8,6 +10,8 @@ interface CustomTopicInputProps {
 }
 
 export function CustomTopicInput({ onSubmit }: CustomTopicInputProps) {
+  const { state } = useDebate();
+  const lang = state.language;
   const [value, setValue] = useState('');
 
   const handleSubmit = () => {
@@ -24,7 +28,7 @@ export function CustomTopicInput({ onSubmit }: CustomTopicInputProps) {
         value={value}
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }}
-        placeholder="输入自定义辩题..."
+        placeholder={t(lang, 'customPlaceholder')}
         className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
       <Button
@@ -34,7 +38,7 @@ export function CustomTopicInput({ onSubmit }: CustomTopicInputProps) {
         disabled={!value.trim()}
         className="shrink-0"
       >
-        自定义
+        {t(lang, 'customSubmit')}
       </Button>
     </div>
   );
