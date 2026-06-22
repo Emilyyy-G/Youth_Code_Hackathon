@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <circle cx="50" cy="50" r="50" fill="#f43f5e"/>
+  <circle cx="50" cy="40" r="18" fill="#fff" opacity="0.9"/>
+  <ellipse cx="50" cy="80" rx="30" ry="20" fill="#fff" opacity="0.9"/>
+  <text x="50" y="85" text-anchor="middle" font-size="16" font-weight="bold" fill="#f43f5e">反</text>
+</svg>

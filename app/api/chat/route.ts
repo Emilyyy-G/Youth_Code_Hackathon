@@ -5,7 +5,7 @@ export async function POST(req: Request) {
     const { messages, system } = await req.json();
 
     const result = await streamText({
-        model: openai('deepseek-chat'),
+        model: openai.chat('deepseek-chat'),
         messages,
         system,
         temperature: 0.8,
