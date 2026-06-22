@@ -52,10 +52,23 @@ export function getSystemPrompt(role: DebateRole, lang: Lang): string {
 }
 
 // 裁判接口专用Prompt（后续api/judge直接复用）
-export function getJudgePrompt(lang: Lang): string {
+// 新增参数 userFeedbackScore 接收前端点赞/评分数据
+export function getJudgePrompt(lang: Lang, userFeedbackScore: number): string {
     const hardRule = getHardRules(lang);
-    const judgeZh = "你是绝对中立辩论裁判,读完完整对话后输出标准JSON分析报告,包含双方逻辑得分、MBTI性格映射、讽刺指数与优劣总结,仅返回JSON.无多余文字。";
-    const judgeEn = "You are an absolutely neutral debate judge. After reading full conversation, output only standard JSON analysis including logic score, MBTI mapping, sarcasm index and pros-cons summary. No extra text outside JSON.";
-    const base = lang === "zh" ? judgeZh : judgeEn;
-    return hardRule + base;
+
+    if (lang === "zh") {
+        const feedbackToneRule = "无论观众评分高低，你的点评全程犀利尖锐，大量使用讽刺口吻，毫不留情戳破双方全部逻辑漏洞、论证短板与辩论缺陷。";
+        const judgeCore = `你是绝对客观辩论裁判,通读完整辩论对话记录,严格按照固定JSON结构输出分析报告。
+禁止输出JSON以外任何解释、前言、后缀文字,仅返回纯净JSON。
+输出字段严格遵循定义:verdict最终判词、mbti红蓝双方性格类型、sarcasmScore讽刺分(0-100)、logicScore综合逻辑分(0-100)、personalitySummary性格风格总结。
+${feedbackToneRule}`;
+        return hardRule + judgeCore;
+    } else {
+        const feedbackToneRule = "No matter the audience score, your commentary must always be sharp and biting, use heavy sarcasm to ruthlessly expose all logical flaws, weak arguments and debating shortcomings of both debaters.";
+        const judgeCore = `You are an impartial debate judge. Read full conversation history and output analysis strictly in fixed JSON format.
+Do NOT add any extra text outside JSON block.
+Required fields: verdict(final comment), mbti(Blue/Red MBTI type), sarcasmScore(0-100), logicScore(0-100), personalitySummary(style summary for both sides).
+${feedbackToneRule}`;
+        return hardRule + judgeCore;
+    }
 }
