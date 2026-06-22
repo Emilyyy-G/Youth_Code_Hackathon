@@ -1,6 +1,9 @@
 'use client';
 
+import { useLayoutEffect, useRef } from 'react';
 import type { Persona, DebateMessage } from '@/types/debate';
+import { useDebate } from '@/lib/store/debate-context';
+import { t } from '@/lib/debate/i18n';
 import { AAvatar } from './AAvatar';
 import { SpeechBubble } from './SpeechBubble';
 
@@ -25,15 +28,23 @@ export function DebaterColumn({
   isHumanControlled,
   onTakeOver,
 }: DebaterColumnProps) {
+  const { state } = useDebate();
+  const lang = state.language;
+  const scrollRef = useRef<HTMLDivElement>(null);
   const orderClass =
     side === 'left'
       ? 'flex-row'
       : 'flex-row-reverse';
 
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  });
+
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      {/* Scrollable message area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+    <div className="flex-1 flex flex-col min-h-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${orderClass} gap-3`}>
             {side === 'left' && (
@@ -66,7 +77,6 @@ export function DebaterColumn({
           </div>
         ))}
 
-        {/* Streaming bubble */}
         {isStreaming && isCurrentSpeaker && streamingContent && (
           <div className={`flex ${orderClass} gap-3`}>
             {side === 'left' && (
@@ -107,7 +117,6 @@ export function DebaterColumn({
           </div>
         )}
 
-        {/* Thinking indicator */}
         {isStreaming && isCurrentSpeaker && !streamingContent && (
           <div className={`flex ${orderClass} gap-3`}>
             {side === 'left' && (
@@ -147,10 +156,9 @@ export function DebaterColumn({
         )}
       </div>
 
-      {/* Bottom spacer */}
       {!messages.length && !isStreaming && (
         <div className="flex-1 flex items-center justify-center text-sm text-zinc-400">
-          等待辩论开始...
+          {t(lang, 'waiting')}
         </div>
       )}
     </div>

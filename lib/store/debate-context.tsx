@@ -20,6 +20,9 @@ const initialState: DebateState = {
   currentSpeaker: null,
   streamingContent: '',
   error: null,
+  language: 'zh',
+  judgeReport: null,
+  judgeLoading: false,
 };
 
 function debateReducer(state: DebateState, action: DebateAction): DebateState {
@@ -78,6 +81,15 @@ function debateReducer(state: DebateState, action: DebateAction): DebateState {
 
     case 'SET_ERROR':
       return { ...state, error: action.error };
+
+    case 'SET_LANGUAGE':
+      return { ...state, language: action.language };
+
+    case 'SET_JUDGE_REPORT':
+      return { ...state, judgeReport: action.report, judgeLoading: false };
+
+    case 'SET_JUDGE_LOADING':
+      return { ...state, judgeLoading: action.loading };
 
     case 'RESET':
       return { ...initialState };
