@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         messages,
         system,
         temperature: 0.8,
-        maxTokens: 500,
+        maxOutputTokens: 500,
     });
 
     return result.toTextStreamResponse();
