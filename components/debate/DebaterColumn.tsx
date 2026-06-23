@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Persona, DebateMessage } from '@/types/debate';
 import { useDebate } from '@/lib/store/debate-context';
 import { t } from '@/lib/debate/i18n';
@@ -39,12 +39,16 @@ export function DebaterColumn({
   const contentRef = useRef(streamingContent);
   contentRef.current = streamingContent;
 
-  // Auto-scroll
-  useEffect(() => {
+  const displayedContent = streamingContent.slice(0, revealed);
+  const fullyRevealed = revealed >= streamingContent.length;
+  const showCursor = isStreaming && isCurrentSpeaker && !fullyRevealed && streamingContent.length > 0;
+
+  // Auto-scroll — useLayoutEffect runs synchronously before paint
+  useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  });
+    el.scrollTo({ top: el.scrollHeight, behavior: 'instant' });
+  }, [messages.length, displayedContent, isStreaming, isCurrentSpeaker, revealed]);
 
   // Tick loop: reveals 2 chars every 50ms for comfortable reading pace
   useEffect(() => {
@@ -68,10 +72,6 @@ export function DebaterColumn({
 
     return () => clearInterval(interval);
   }, [isStreaming, isCurrentSpeaker]);
-
-  const displayedContent = streamingContent.slice(0, revealed);
-  const fullyRevealed = revealed >= streamingContent.length;
-  const showCursor = isStreaming && isCurrentSpeaker && !fullyRevealed && streamingContent.length > 0;
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
