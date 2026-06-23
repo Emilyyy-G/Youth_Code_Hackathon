@@ -9,7 +9,11 @@ export function getNextSpeaker(
 ): PersonaId | null {
   const msgsThisRound = messages.filter(m => m.round === currentRound);
 
-  if (msgsThisRound.length === 0) return TURN_ORDER[0];
+  if (msgsThisRound.length === 0) {
+    // Check if the first speaker (ai1) has been taken over by human
+    if (isHumanVsAi && humanPersona === TURN_ORDER[0]) return 'human';
+    return TURN_ORDER[0];
+  }
   if (msgsThisRound.length === 1) {
     const nextSpeaker = TURN_ORDER[1];
     if (isHumanVsAi && humanPersona === nextSpeaker) {
