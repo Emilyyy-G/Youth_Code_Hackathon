@@ -14,6 +14,9 @@ export function DebateLayout() {
   const { state, dispatch } = useDebate();
   const abortRef = useRef<AbortController | null>(null);
   const [takeoverTarget, setTakeoverTarget] = useState<PersonaId | null>(null);
+  const [pauseTick, setPauseTick] = useState(0);
+  const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastMsgCountRef = useRef(state.messages.length);
 
   const generateDebateResponse = useCallback(async (personaId: PersonaId) => {
     if (personaId === 'human') return;
@@ -88,7 +91,7 @@ export function DebateLayout() {
     }
   }, [state.topic, state.currentRound, state.messages, state.moderatorNote, dispatch]);
 
-  // Auto-advance debate
+  // Auto-advance debate with 5-second pauses between speakers and before scoring
   useEffect(() => {
     if (state.phase !== 'debating' && state.phase !== 'human-vs-ai') return;
     if (state.isStreaming) return;
@@ -96,10 +99,21 @@ export function DebateLayout() {
 
     const isHumanVsAi = state.phase === 'human-vs-ai';
 
-    if (isRoundComplete(state.messages, state.currentRound)) {
-      dispatch({ type: 'SET_PHASE', phase: 'scoring' });
+    // If we're not in a pause and a speaker just finished (messages count changed),
+    // start a 5-second pause timer before proceeding.
+    const msgCount = state.messages.length;
+    if (msgCount > lastMsgCountRef.current && !isHumanVsAi && !pauseTimerRef.current) {
+      lastMsgCountRef.current = msgCount;
+      pauseTimerRef.current = setTimeout(() => {
+        pauseTimerRef.current = null;
+        setPauseTick(t => t + 1);
+      }, 5000);
       return;
     }
+    lastMsgCountRef.current = msgCount;
+
+    // If a pause timer is active, wait
+    if (pauseTimerRef.current) return;
 
     const nextSpeaker = getNextSpeaker(
       state.messages, state.currentRound, isHumanVsAi, state.humanPersona,
@@ -114,7 +128,7 @@ export function DebateLayout() {
 
     generateDebateResponse(nextSpeaker);
   }, [state.phase, state.messages, state.currentRound, state.isStreaming, state.error,
-      state.humanPersona, state.moderatorNote, dispatch, generateDebateResponse]);
+      state.humanPersona, state.moderatorNote, dispatch, generateDebateResponse, pauseTick]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
