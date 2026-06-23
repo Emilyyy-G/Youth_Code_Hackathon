@@ -197,25 +197,29 @@ export function Dashboard({ takeoverTarget, onConfirmTakeOver, onCancelTakeOver 
           {state.phase === 'human-vs-ai' && !takeoverTarget && (
             <section className="space-y-2">
               {isHumanTurn ? (
-                <>
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                      {t(lang, 'youRepresent', { stance: humanPersonaState ? t(lang, humanPersonaState.stance) : '' })}
+                    <span className="text-xs font-bold text-green-700 dark:text-green-300">
+                      ✍️ {t(lang, 'youRepresent', { stance: humanPersonaState ? t(lang, humanPersonaState.stance) : '' })}
                     </span>
                   </div>
-                  <input
-                    type="text"
+                  <textarea
                     value={humanInput}
                     onChange={e => setHumanInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleHumanSubmit(); } }}
+                    rows={3}
                     placeholder={t(lang, 'inputPlaceholder')}
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 rounded-xl border border-green-300 dark:border-green-700 bg-white dark:bg-zinc-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
                     maxLength={500}
                   />
-                  <Button variant="primary" size="sm" className="w-full" onClick={handleHumanSubmit} disabled={!humanInput.trim()}>
-                    {t(lang, 'speak')}
-                  </Button>
-                </>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" size="sm" className="flex-1" onClick={() => { dispatch({ type: 'SET_HUMAN_PERSONA', personaId: null }); dispatch({ type: 'SET_PHASE', phase: 'debating' }); }}>
+                      交还控制
+                    </Button>
+                    <Button variant="primary" size="sm" className="flex-1" onClick={handleHumanSubmit} disabled={!humanInput.trim()}>
+                      {t(lang, 'speak')}
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <div className="text-center text-xs text-zinc-400 py-4">
                   <div className="flex items-center justify-center gap-2">

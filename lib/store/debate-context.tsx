@@ -73,7 +73,7 @@ function debateReducer(state: DebateState, action: DebateAction): DebateState {
         ...state,
         currentRound: state.currentRound + 1,
         moderatorNote: null,
-        phase: 'debating',
+        phase: state.humanPersona ? 'human-vs-ai' : 'debating',
       };
 
     case 'SET_HUMAN_PERSONA':
