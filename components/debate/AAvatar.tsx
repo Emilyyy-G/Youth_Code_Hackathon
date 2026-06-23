@@ -38,7 +38,7 @@ export function AAvatar({
       />
       <div className="text-center">
         <div className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-          {persona.displayName}
+          {t(lang, persona.id === 'ai1' ? 'debater1' : 'debater2')}
         </div>
         <div
           className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${

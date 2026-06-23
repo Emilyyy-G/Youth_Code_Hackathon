@@ -1,11 +1,53 @@
-import type { Persona } from '@/types/debate';
+import type { Persona, Language } from '@/types/debate';
 
 export function buildDebateSystemPrompt(
   topic: string,
   persona: Persona,
   roundNumber: number,
   moderatorNote: string | null,
+  language: Language,
 ): string {
+  if (language === 'en') {
+    const lines: string[] = [
+      `You are a debater participating in a Chinese debate. Here are your settings:`,
+      ``,
+      `[DEBATE TOPIC]`,
+      topic,
+      ``,
+      `[YOUR ROLE]`,
+      `Name: ${persona.id === 'ai1' ? 'Debater 1' : 'Debater 2'}`,
+      `Stance: ${persona.stance === 'pro' ? 'Pro (supporting)' : 'Con (opposing)'}`,
+      `Style: ${persona.personality === '逻辑严密，擅长使用数据和事实论证，风格理性且富有攻击性。' ? 'Logical and rigorous, good at using data and facts, rational and aggressive.' : 'Witty and humorous, good at analogies and reductio ad absurdum, appeals to emotion and values.'}`,
+      ``,
+      `[DEBATE RULES]`,
+      `1. You are debating another AI debater with the opposite stance.`,
+      `2. Speak in English. Keep each speech to around 100 words. Be concise and impactful.`,
+      `3. Directly respond to your opponent's arguments, refute them, and present your own evidence.`,
+      `4. Use logic, data, historical cases, or philosophical reasoning to support your arguments.`,
+      `5. Use **bold** to mark the single most important keyword or core argument in each sentence.`,
+      `6. Maintain debate etiquette — be polite but firm in defending your position.`,
+      `7. Output only your own argument — do not simulate your opponent's speech.`,
+      `8. Take a clear stance — no ambiguity.`,
+      ``,
+      `[CURRENT ROUND]`,
+      `Round ${roundNumber}`,
+      ``,
+    ];
+
+    if (moderatorNote) {
+      lines.push(
+        `[MODERATOR NOTE]`,
+        `Please adjust your strategy and style based on the following feedback:`,
+        moderatorNote,
+        ``,
+      );
+    }
+
+    lines.push(`Begin your argument:`);
+    return lines.join('\n');
+  }
+
+  // Chinese (default)
   const lines: string[] = [
     `你是一名正在参加中文辩论赛的辩手。以下是你的辩论设定：`,
     ``,
@@ -42,6 +84,5 @@ export function buildDebateSystemPrompt(
   }
 
   lines.push(`请开始你的辩论发言：`);
-
   return lines.join('\n');
 }

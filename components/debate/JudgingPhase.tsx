@@ -150,7 +150,7 @@ export function JudgingPhase() {
               : report.winner === 'ai2' ? 'bg-rose-500 text-white'
               : 'bg-amber-500 text-white'
             }`}>
-              {t(lang, 'winner')}: {report.winner === 'tie' ? t(lang, 'tie') : PERSONAS[report.winner]?.displayName || ''}
+              {t(lang, 'winner')}: {report.winner === 'tie' ? t(lang, 'tie') : t(lang, report.winner === 'ai1' ? 'debater1' : 'debater2')}
             </div>
           </div>
 
@@ -158,8 +158,8 @@ export function JudgingPhase() {
             <span className="text-xs text-zinc-400 uppercase tracking-wide">{t(lang, 'finalScore')}</span>
             <div className="text-3xl font-extrabold mt-1">{totalScore > 0 ? `+${totalScore}` : totalScore}</div>
             <div className="flex justify-center gap-4 mt-2 text-xs text-zinc-500">
-              <span className="text-blue-500">{persona1?.displayName || ''}: {ai1Score}/{state.scores.length}</span>
-              <span className="text-rose-500">{persona2?.displayName || ''}: {ai2Score}/{state.scores.length}</span>
+              <span className="text-blue-500">{t(lang, 'debater1')}: {ai1Score}/{state.scores.length}</span>
+              <span className="text-rose-500">{t(lang, 'debater2')}: {ai2Score}/{state.scores.length}</span>
             </div>
           </div>
 
@@ -177,7 +177,7 @@ export function JudgingPhase() {
                     ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
                     : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800'
                 }`}>
-                  <div className="text-xs font-bold mb-1">{p?.displayName || ''}</div>
+                  <div className="text-xs font-bold mb-1">{t(lang, i === 0 ? 'debater1' : 'debater2')}</div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400 italic">&ldquo;{d.bestQuote}&rdquo;</p>
                 </div>
               );
@@ -209,7 +209,7 @@ export function JudgingPhase() {
                     {isFirst ? t(lang, 'pro').charAt(0) : t(lang, 'con').charAt(0)}
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{p?.displayName || ''}</div>
+                    <div className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{t(lang, isFirst ? 'debater1' : 'debater2')}</div>
                     <div className="text-xs text-zinc-500">{t(lang, 'mbtiType')}: {d.mbti} · {t(lang, 'title')}: {d.title}</div>
                   </div>
                 </div>
