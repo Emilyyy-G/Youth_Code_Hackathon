@@ -32,10 +32,15 @@ export function DebateLayout() {
         state.topic, persona, state.currentRound, state.moderatorNote,
       );
 
+      // AI SDK requires at least one message; seed with a starter if empty
+      const messages = history.length > 0
+        ? history
+        : [{ role: 'user' as const, content: `请作为${persona.displayName}开始你的辩论发言。` }];
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, system: systemPrompt }),
+        body: JSON.stringify({ messages, system: systemPrompt }),
         signal: controller.signal,
       });
 
@@ -53,6 +58,8 @@ export function DebateLayout() {
         dispatch({ type: 'SET_STREAMING_CONTENT', content: fullContent });
       }
 
+      if (!fullContent.trim()) throw new Error('Empty response');
+
       dispatch({
         type: 'ADD_MESSAGE',
         message: {
@@ -67,6 +74,7 @@ export function DebateLayout() {
       dispatch({ type: 'CLEAR_STREAMING' });
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
+      console.error('generateDebateResponse error:', err);
       dispatch({ type: 'SET_ERROR', error: String(err) });
     } finally {
       dispatch({ type: 'SET_STREAMING', isStreaming: false });
@@ -76,8 +84,9 @@ export function DebateLayout() {
 
   // Auto-advance debate
   useEffect(() => {
-    if (state.isStreaming || state.error) return;
     if (state.phase !== 'debating' && state.phase !== 'human-vs-ai') return;
+    if (state.isStreaming) return;
+    if (state.error) return;
 
     const isHumanVsAi = state.phase === 'human-vs-ai';
 
@@ -95,7 +104,7 @@ export function DebateLayout() {
       return;
     }
 
-    if (nextSpeaker === 'human') return; // wait for Dashboard input
+    if (nextSpeaker === 'human') return;
 
     generateDebateResponse(nextSpeaker);
   }, [state.phase, state.messages, state.currentRound, state.isStreaming, state.error,
@@ -121,11 +130,22 @@ export function DebateLayout() {
   const ai2IsSpeaker = state.currentSpeaker === 'ai2' || (state.currentSpeaker === 'human' && state.humanPersona === 'ai2');
 
   return (
-    <div className="flex-1 grid grid-cols-[1fr_350px] overflow-hidden">
-      {/* ===== 左侧：辩论聊天区 ===== */}
-      <div className="grid grid-cols-2 overflow-hidden">
-        {/* AI1 列 */}
-        <div className="overflow-y-auto border-r border-zinc-200 dark:border-zinc-700">
+    <div className="flex-1 flex min-h-0 relative">
+      {/* Error banner */}
+      {state.error && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-40 px-4 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl shadow-lg flex items-center gap-3">
+          <span className="text-xs text-red-600 dark:text-red-400">{'⚠️'} {state.error}</span>
+          <button
+            onClick={() => dispatch({ type: 'SET_ERROR', error: null })}
+            className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 underline whitespace-nowrap"
+          >
+            重试
+          </button>
+        </div>
+      )}
+      {/* Left debate area */}
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 border-r border-zinc-200 dark:border-zinc-700">
           <DebaterColumn
             persona={PERSONAS.ai1}
             messages={ai1Messages}
@@ -138,8 +158,7 @@ export function DebateLayout() {
           />
         </div>
 
-        {/* AI2 列 */}
-        <div className="overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-0">
           <DebaterColumn
             persona={PERSONAS.ai2}
             messages={ai2Messages}
@@ -153,7 +172,7 @@ export function DebateLayout() {
         </div>
       </div>
 
-      {/* ===== 右侧：控制台侧边栏（固定，不滚动） ===== */}
+      {/* Right Dashboard sidebar */}
       <Dashboard
         takeoverTarget={takeoverTarget}
         onConfirmTakeOver={confirmTakeOver}

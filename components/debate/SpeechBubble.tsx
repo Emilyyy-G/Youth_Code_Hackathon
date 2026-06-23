@@ -1,6 +1,6 @@
 'use client';
 
-import type { DebateMessage, PersonaId } from '@/types/debate';
+import type { DebateMessage } from '@/types/debate';
 import { MessageActions } from './MessageActions';
 
 interface SpeechBubbleProps {
@@ -8,6 +8,11 @@ interface SpeechBubbleProps {
   side: 'left' | 'right';
   color: string;
   isStreaming?: boolean;
+}
+
+function renderBold(text: string): string {
+  // Convert **text** to <strong>text</strong>
+  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 export function SpeechBubble({
@@ -29,12 +34,13 @@ export function SpeechBubble({
           side === 'left' ? 'rounded-bl-md' : 'rounded-br-md'
         }`}
       >
-        <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
-          {message.content}
-          {isStreaming && (
-            <span className="inline-block w-2 h-4 ml-1 bg-zinc-400 dark:bg-zinc-500 animate-pulse rounded-sm" />
-          )}
-        </p>
+        <p
+          className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap [&_strong]:font-bold [&_strong]:text-zinc-950 dark:[&_strong]:text-zinc-50"
+          dangerouslySetInnerHTML={{ __html: renderBold(message.content) }}
+        />
+        {isStreaming && (
+          <span className="inline-block w-2 h-4 ml-1 bg-zinc-400 dark:bg-zinc-500 animate-pulse rounded-sm" />
+        )}
       </div>
       <div className={`mt-1 flex ${side === 'left' ? 'justify-start' : 'justify-end'}`}>
         <MessageActions messageId={message.id} vote={message.vote} />

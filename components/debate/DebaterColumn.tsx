@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Persona, DebateMessage } from '@/types/debate';
 import { useDebate } from '@/lib/store/debate-context';
 import { t } from '@/lib/debate/i18n';
@@ -31,16 +31,48 @@ export function DebaterColumn({
   const { state } = useDebate();
   const lang = state.language;
   const scrollRef = useRef<HTMLDivElement>(null);
-  const orderClass =
-    side === 'left'
-      ? 'flex-row'
-      : 'flex-row-reverse';
+  const orderClass = side === 'left' ? 'flex-row' : 'flex-row-reverse';
 
-  useLayoutEffect(() => {
+  // Fast consistent character-by-character reveal
+  const [revealed, setRevealed] = useState(0);
+  const revealedRef = useRef(0);
+  const contentRef = useRef(streamingContent);
+  contentRef.current = streamingContent;
+
+  // Auto-scroll
+  useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   });
+
+  // Tick loop: reveals 3 chars every 15ms using refs to always see latest content
+  useEffect(() => {
+    if (!isStreaming || !isCurrentSpeaker) {
+      setRevealed(0);
+      revealedRef.current = 0;
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const totalLen = contentRef.current.length;
+      const next = revealedRef.current + 3;
+      if (next >= totalLen) {
+        revealedRef.current = totalLen;
+        setRevealed(totalLen);
+        // Don't clear — keep ticking so new chunks are picked up immediately
+      } else {
+        revealedRef.current = next;
+        setRevealed(next);
+      }
+    }, 15);
+
+    return () => clearInterval(interval);
+  }, [isStreaming, isCurrentSpeaker]);
+
+  const displayedContent = streamingContent.slice(0, revealed);
+  const fullyRevealed = revealed >= streamingContent.length;
+  const showCursor = isStreaming && isCurrentSpeaker && !fullyRevealed && streamingContent.length > 0;
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -94,14 +126,14 @@ export function DebaterColumn({
                 message={{
                   id: 'streaming',
                   personaId: persona.id,
-                  content: streamingContent,
+                  content: displayedContent,
                   round: 0,
                   timestamp: Date.now(),
                   vote: 0,
                 }}
                 side={side}
                 color={persona.color}
-                isStreaming
+                isStreaming={showCursor}
               />
             </div>
             {side === 'right' && (
