@@ -21,6 +21,17 @@ export interface Persona {
   color: string;
 }
 
+export interface TopicItem {
+  zh: string;
+  en: string;
+}
+
+export interface TopicCategory {
+  id: string;
+  icon: string;
+  topics: TopicItem[];
+}
+
 export interface DebateMessage {
   id: string;
   personaId: PersonaId;

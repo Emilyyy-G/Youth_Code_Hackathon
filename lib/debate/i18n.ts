@@ -1,4 +1,5 @@
 import type { Language } from '@/types/debate';
+import { TOPIC_CATEGORIES } from '@/lib/debate/constants';
 
 const locales: Record<Language, Record<string, string>> = {
   zh: {
@@ -87,16 +88,14 @@ const locales: Record<Language, Record<string, string>> = {
     'average': '一般',
     'poor': '较差',
     'terrible': '很差',
-    'topic_ai_legal_personality': '人工智能应不应该拥有法律人格？',
-    'topic_short_video': '短视频平台对学生利大于弊还是弊大于利？',
-    'topic_liberal_arts': '高中阶段应不应该取消文理分科？',
-    'topic_fireworks': '大城市应不应该全面禁止燃放烟花爆竹？',
-    'topic_real_name': '网络实名制是利大于弊还是弊大于利？',
-    'topic_finance_course': '高中阶段应不应该开设金融理财课程？',
-    'topic_ai_copyright': '人工智能创作的作品是否享有版权？',
-    'topic_smartphone': '学校应不应该禁止学生使用智能手机？',
-    'topic_gaokao': '高考制度应不应该取消？',
-    'topic_cloning': '克隆技术的研究应不应该被严格限制？',
+    'categoryTitle': '选择话题类别',
+    'categoryDesc': '选择一个你感兴趣的领域',
+    'cat_tech': '科技',
+    'cat_society': '社会',
+    'cat_education': '教育',
+    'cat_ethics': '伦理',
+    'cat_environment': '环境',
+    'cat_lifestyle': '生活方式',
   },
   en: {
     'back': '← Back',
@@ -184,16 +183,14 @@ const locales: Record<Language, Record<string, string>> = {
     'average': 'Average',
     'poor': 'Poor',
     'terrible': 'Terrible',
-    'topic_ai_legal_personality': 'Should AI be granted legal personality?',
-    'topic_short_video': 'Do short video platforms do more harm than good to students?',
-    'topic_liberal_arts': 'Should the art-science division be abolished in high school?',
-    'topic_fireworks': 'Should fireworks be completely banned in big cities?',
-    'topic_real_name': 'Is the real-name system on the internet beneficial or harmful?',
-    'topic_finance_course': 'Should high schools offer financial literacy courses?',
-    'topic_ai_copyright': 'Should AI-generated works be eligible for copyright?',
-    'topic_smartphone': 'Should schools ban students from using smartphones?',
-    'topic_gaokao': 'Should the Gaokao (college entrance exam) be abolished?',
-    'topic_cloning': 'Should cloning technology research be strictly restricted?',
+    'categoryTitle': 'Choose a Category',
+    'categoryDesc': 'Pick an area that interests you',
+    'cat_tech': 'Technology',
+    'cat_society': 'Society',
+    'cat_education': 'Education',
+    'cat_ethics': 'Ethics',
+    'cat_environment': 'Environment',
+    'cat_lifestyle': 'Lifestyle',
   },
 };
 
@@ -213,25 +210,15 @@ export function t(lang: Language, key: string, params?: Record<string, string | 
   return text;
 }
 
-const topicKeyMap: Record<string, string> = {
-  '人工智能应不应该拥有法律人格？': 'topic_ai_legal_personality',
-  '短视频平台对学生利大于弊还是弊大于利？': 'topic_short_video',
-  '高中阶段应不应该取消文理分科？': 'topic_liberal_arts',
-  '大城市应不应该全面禁止燃放烟花爆竹？': 'topic_fireworks',
-  '网络实名制是利大于弊还是弊大于利？': 'topic_real_name',
-  '高中阶段应不应该开设金融理财课程？': 'topic_finance_course',
-  '人工智能创作的作品是否享有版权？': 'topic_ai_copyright',
-  '学校应不应该禁止学生使用智能手机？': 'topic_smartphone',
-  '高考制度应不应该取消？': 'topic_gaokao',
-  '克隆技术的研究应不应该被严格限制？': 'topic_cloning',
-};
+const topicFlatMap: Record<string, string> = {};
+for (const cat of TOPIC_CATEGORIES) {
+  for (const t of cat.topics) {
+    topicFlatMap[t.zh] = t.en;
+    topicFlatMap[t.en] = t.en;
+  }
+}
 
 export function translateTopic(lang: Language, topic: string): string {
   if (lang === 'zh') return topic;
-  const key = topicKeyMap[topic];
-  if (key) {
-    const translated = locales.en[key];
-    if (translated) return translated;
-  }
-  return topic;
+  return topicFlatMap[topic] || topic;
 }

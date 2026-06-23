@@ -1,4 +1,4 @@
-import type { Persona } from '@/types/debate';
+import type { TopicCategory, Persona } from '@/types/debate';
 
 export const PERSONAS: Record<string, Persona> = {
   ai1: {
@@ -21,18 +21,76 @@ export const PERSONAS: Record<string, Persona> = {
   },
 };
 
-export const DEFAULT_TOPICS: string[] = [
-  '人工智能应不应该拥有法律人格？',
-  '短视频平台对学生利大于弊还是弊大于利？',
-  '高中阶段应不应该取消文理分科？',
-  '大城市应不应该全面禁止燃放烟花爆竹？',
-  '网络实名制是利大于弊还是弊大于利？',
-  '高中阶段应不应该开设金融理财课程？',
-  '人工智能创作的作品是否享有版权？',
-  '学校应不应该禁止学生使用智能手机？',
-  '高考制度应不应该取消？',
-  '克隆技术的研究应不应该被严格限制？',
+export const TOPIC_CATEGORIES: TopicCategory[] = [
+  {
+    id: 'tech',
+    icon: '💻',
+    topics: [
+      { zh: '人工智能应不应该拥有法律人格？', en: 'Should AI be granted legal personality?' },
+      { zh: '人工智能创作的作品是否享有版权？', en: 'Should AI-generated works be eligible for copyright?' },
+      { zh: '人脸识别技术应不应该在公共场所广泛使用？', en: 'Should facial recognition be widely used in public spaces?' },
+      { zh: '社交媒体平台对用户的数据收集是否应该受到更严格的限制？', en: 'Should social media data collection be more strictly regulated?' },
+      { zh: '自动驾驶汽车发生事故时，责任应该归谁？', en: 'Who should be held liable when self-driving cars cause accidents?' },
+    ],
+  },
+  {
+    id: 'society',
+    icon: '🌍',
+    topics: [
+      { zh: '短视频平台对学生利大于弊还是弊大于利？', en: 'Do short video platforms do more harm than good to students?' },
+      { zh: '大城市应不应该全面禁止燃放烟花爆竹？', en: 'Should fireworks be completely banned in big cities?' },
+      { zh: '网络实名制是利大于弊还是弊大于利？', en: 'Is the real-name system on the internet beneficial or harmful?' },
+      { zh: '学校应不应该禁止学生使用智能手机？', en: 'Should schools ban students from using smartphones?' },
+      { zh: '远程办公会不会成为未来的主流工作方式？', en: 'Will remote work become the dominant way of working?' },
+    ],
+  },
+  {
+    id: 'education',
+    icon: '📚',
+    topics: [
+      { zh: '高中阶段应不应该取消文理分科？', en: 'Should the art-science division be abolished in high school?' },
+      { zh: '高中阶段应不应该开设金融理财课程？', en: 'Should high schools offer financial literacy courses?' },
+      { zh: '高考制度应不应该取消？', en: 'Should the Gaokao (college entrance exam) be abolished?' },
+      { zh: '大学教育是否应该免费？', en: 'Should university education be free?' },
+      { zh: '标准化考试是否能够准确衡量学生的能力？', en: 'Do standardized tests accurately measure student ability?' },
+    ],
+  },
+  {
+    id: 'ethics',
+    icon: '⚖️',
+    topics: [
+      { zh: '克隆技术的研究应不应该被严格限制？', en: 'Should cloning technology research be strictly restricted?' },
+      { zh: '动物实验在医学研究中是否应该被禁止？', en: 'Should animal testing be banned in medical research?' },
+      { zh: '基因编辑婴儿技术是否应该被允许？', en: 'Should gene-edited baby technology be permitted?' },
+      { zh: '安乐死应不应该合法化？', en: 'Should euthanasia be legalized?' },
+      { zh: '个人是否有权利选择自己的死亡方式？', en: 'Does an individual have the right to choose their own death?' },
+    ],
+  },
+  {
+    id: 'environment',
+    icon: '🌱',
+    topics: [
+      { zh: '经济发展和环境保护哪个更重要？', en: 'Which is more important: economic growth or environmental protection?' },
+      { zh: '一次性塑料制品应不应该被全面禁止？', en: 'Should single-use plastics be completely banned?' },
+      { zh: '个人行动能否有效应对气候变化？', en: 'Can individual actions effectively combat climate change?' },
+      { zh: '核能是不是解决能源危机的最佳方案？', en: 'Is nuclear energy the best solution to the energy crisis?' },
+      { zh: '城市应该不应该收取拥堵费来减少汽车使用？', en: 'Should cities charge congestion fees to reduce car usage?' },
+    ],
+  },
+  {
+    id: 'lifestyle',
+    icon: '🧘',
+    topics: [
+      { zh: '追求物质成功和追求精神幸福哪个更重要？', en: 'Which matters more: material success or spiritual happiness?' },
+      { zh: '社交媒体让人更孤独还是更连接？', en: 'Does social media make us more lonely or more connected?' },
+      { zh: '朝九晚五的工作制度是否已经过时？', en: 'Is the 9-to-5 work schedule outdated?' },
+      { zh: '整容手术的普及对社会审美的影响是正面的还是负面的？', en: 'Is the rise of cosmetic surgery positive or negative for society?' },
+      { zh: '极简主义生活方式是否真的能带来幸福？', en: 'Can a minimalist lifestyle truly bring happiness?' },
+    ],
+  },
 ];
+
+export const DEFAULT_TOPICS = TOPIC_CATEGORIES.flatMap(c => c.topics.map(t => t.zh));
 
 export const MAX_ROUNDS = 5;
 
