@@ -5,6 +5,7 @@ import { useDebate } from '@/lib/store/debate-context';
 import { PERSONAS, MAX_ROUNDS } from '@/lib/debate/constants';
 import { getNextSpeaker, isRoundComplete, buildMessageHistory } from '@/lib/debate/engine';
 import { buildDebateSystemPrompt } from '@/lib/debate/prompt-builder';
+import { t } from '@/lib/debate/i18n';
 import { DebaterColumn } from './DebaterColumn';
 import { Dashboard } from './Dashboard';
 import type { PersonaId } from '@/types/debate';
@@ -29,13 +30,18 @@ export function DebateLayout() {
     try {
       const history = buildMessageHistory(state.messages);
       const systemPrompt = buildDebateSystemPrompt(
-        state.topic, persona, state.currentRound, state.moderatorNote,
+        state.topic, persona, state.currentRound, state.moderatorNote, state.language,
       );
 
       // AI SDK requires at least one message; seed with a starter if empty
+      const lang = state.language;
+      const debaterLabel = persona.id === 'ai1' ? t(lang, 'debater1') : t(lang, 'debater2');
+      const seedMsg = lang === 'en'
+        ? `Please begin your debate as ${debaterLabel}.`
+        : `请作为${debaterLabel}开始你的辩论发言。`;
       const messages = history.length > 0
         ? history
-        : [{ role: 'user' as const, content: `请作为${persona.displayName}开始你的辩论发言。` }];
+        : [{ role: 'user' as const, content: seedMsg }];
 
       const res = await fetch('/api/chat', {
         method: 'POST',
