@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useLayoutEffect, useRef } from 'react';
 import { useDebate } from '@/lib/store/debate-context';
 import { PERSONAS, MAX_ROUNDS } from '@/lib/debate/constants';
 import { t } from '@/lib/debate/i18n';
 import { Button } from '@/components/shared/Button';
 import type { PersonaId } from '@/types/debate';
+console.log("!!! 正在运行的 Dashboard.tsx 已经修改过 !!!");
 
 interface DashboardProps {
   takeoverTarget: PersonaId | null;
@@ -16,36 +17,31 @@ interface DashboardProps {
 export function Dashboard({ takeoverTarget, onConfirmTakeOver, onCancelTakeOver }: DashboardProps) {
   const { state, dispatch } = useDebate();
   const lang = state.language;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 状态管理
   const [pauseNote, setPauseNote] = useState('');
   const [humanInput, setHumanInput] = useState('');
   const [score, setScore] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const dashContentRef = useRef<HTMLDivElement>(null);
+  const [isJudging, setIsJudging] = useState(false);
+  const [judgeResult, setJudgeResult] = useState<any | null>(null);
+
   const isScoring = state.phase === 'scoring';
+  const isJudgingPhase = state.phase === 'judging';
   const isPaused = state.phase === 'paused';
 
-  useEffect(() => {
-    if (isScoring) setScore(0);
-  }, [isScoring]);
-
   useLayoutEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  });
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [state.messages, state.phase]);
 
+  // 操作函数
   const handlePauseToggle = () => {
-    if (state.phase === 'debating' || state.phase === 'human-vs-ai') {
-      dispatch({ type: 'SET_PHASE', phase: 'paused' });
-    } else if (state.phase === 'paused') {
-      setPauseNote('');
-      dispatch({ type: 'SET_PHASE', phase: 'debating' });
-    }
+    if (state.phase === 'debating' || state.phase === 'human-vs-ai') dispatch({ type: 'SET_PHASE', phase: 'paused' });
+    else if (state.phase === 'paused') dispatch({ type: 'SET_PHASE', phase: 'debating' });
   };
+
   const handleResumeWithNote = () => {
-    if (pauseNote.trim()) {
-      dispatch({ type: 'SET_MODERATOR_NOTE', note: pauseNote.trim() });
-    }
+    if (pauseNote.trim()) dispatch({ type: 'SET_MODERATOR_NOTE', note: pauseNote.trim() });
     setPauseNote('');
     dispatch({ type: 'SET_PHASE', phase: 'debating' });
   };
@@ -56,190 +52,128 @@ export function Dashboard({ takeoverTarget, onConfirmTakeOver, onCancelTakeOver 
       dispatch({ type: 'SET_PHASE', phase: 'judging' });
     } else {
       dispatch({ type: 'NEXT_ROUND' });
+      setScore(0);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    // 1. 触发加载状态（UI 层面）
+    dispatch({ type: 'SET_JUDGE_LOADING', loading: true });
+    setIsJudging(true);
+
+    console.log("=== 开始执行生成报告函数 ===");
+
+    try {
+      const res = await fetch('/api/judge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: state.messages,
+          language: lang,
+          userFeedback: 50 // 保持你原有的逻辑
+        }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data = await res.json();
+      console.log("=== 后端返回的完整数据结构 ===", data);
+
+      // 2. 更新本地状态（用于侧边栏渲染）
+      setJudgeResult(data);
+
+      // 3. 更新全局 Context（用于主页面组件读取数据）
+      dispatch({ type: 'SET_JUDGE_REPORT', report: data });
+
+    } catch (err) {
+      console.error("=== 捕获到错误 ===", err);
+      alert("裁判罢工了，错误信息: " + err);
+      // 如果出错，也要取消加载状态
+      dispatch({ type: 'SET_JUDGE_LOADING', loading: false });
+    } finally {
+      setIsJudging(false);
     }
   };
 
   const handleHumanSubmit = () => {
-    const trimmed = humanInput.trim();
-    if (!trimmed || !state.humanPersona) return;
+    if (!humanInput.trim() || !state.humanPersona) return;
     dispatch({
       type: 'ADD_MESSAGE',
-      message: {
-        id: crypto.randomUUID(),
-        personaId: 'human',
-        content: trimmed,
-        round: state.currentRound,
-        timestamp: Date.now(),
-        vote: 0,
-      },
+      message: { id: crypto.randomUUID(), personaId: 'human', content: humanInput.trim(), round: state.currentRound, timestamp: Date.now(), vote: 0 },
     });
     setHumanInput('');
   };
 
-  const isHumanTurn =
-    state.phase === 'human-vs-ai' &&
-    !state.isStreaming &&
-    state.humanPersona !== null &&
-    state.messages.filter(m => m.round === state.currentRound).length < 2;
-
+  const isHumanTurn = state.phase === 'human-vs-ai' && !state.isStreaming && state.humanPersona !== null && state.messages.filter(m => m.round === state.currentRound).length < 2;
   const humanPersonaState = state.humanPersona ? PERSONAS[state.humanPersona] : null;
-  const takeoverPersona = takeoverTarget ? PERSONAS[takeoverTarget] : null;
   const totalScore = state.scores.reduce((s, sc) => s + sc.score, 0);
 
   return (
     <aside className="w-[350px] shrink-0 border-l border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex flex-col self-stretch">
       <div className="p-4 pb-2 space-y-3">
-        <Button
-          variant={isPaused ? 'primary' : 'secondary'}
-          size="md"
-          className="w-full"
-          onClick={handlePauseToggle}
-        >
+        <Button variant={isPaused ? 'primary' : 'secondary'} className="w-full" onClick={handlePauseToggle}>
           {isPaused ? t(lang, 'resume') : t(lang, 'pause')}
         </Button>
-
         {state.scores.length > 0 && (
           <div className="text-center">
-            <span className="text-[10px] text-zinc-400 uppercase tracking-wide">{t(lang, 'totalScore')}</span>
-            <div className="text-xl font-bold text-zinc-800 dark:text-zinc-200">
-              {totalScore > 0 ? `+${totalScore}` : totalScore}
-            </div>
-            <span className="text-[10px] text-zinc-400">
-              {t(lang, 'scored', { n: state.scores.length, total: MAX_ROUNDS })}
-            </span>
+            <span className="text-[10px] text-zinc-400 uppercase">{t(lang, 'totalScore')}</span>
+            <div className="text-xl font-bold">{totalScore > 0 ? `+${totalScore}` : totalScore}</div>
           </div>
         )}
       </div>
 
-      <hr className="border-zinc-200 dark:border-zinc-700 mx-4" />
+      <hr className="border-zinc-200 mx-4" />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 pt-3">
-        <div ref={dashContentRef} className="flex flex-col gap-4 min-h-full justify-end">
+        <div className="flex flex-col gap-4 min-h-full justify-end">
+          {/* 暂停逻辑 */}
           {isPaused && (
             <section className="space-y-2">
-              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                {t(lang, 'moderatorTitle')}
-              </label>
-              <textarea
-                value={pauseNote}
-                onChange={e => setPauseNote(e.target.value)}
-                placeholder={t(lang, 'moderatorPlaceholder')}
-                rows={3}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="flex-1" onClick={() => { setPauseNote(''); dispatch({ type: 'SET_PHASE', phase: 'debating' }); }}>
-                  {t(lang, 'cancel')}
-                </Button>
-                <Button variant="primary" size="sm" className="flex-1" onClick={handleResumeWithNote}>
-                  {t(lang, 'submitIntervention')}
-                </Button>
-              </div>
+              <textarea value={pauseNote} onChange={e => setPauseNote(e.target.value)} placeholder={t(lang, 'moderatorPlaceholder')} rows={3} className="w-full p-2 text-xs border rounded-lg" />
+              <Button variant="primary" size="sm" className="w-full" onClick={handleResumeWithNote}>{t(lang, 'submitIntervention')}</Button>
             </section>
           )}
 
+          {/* 评分逻辑 */}
           {isScoring && (
             <section>
-              <div className="text-center mb-3">
-                <div className="text-2xl mb-1">📊</div>
-                <h3 className="text-sm font-bold">{t(lang, 'scoringTitle', { round: state.currentRound })}</h3>
-              </div>
+              <h3 className="text-sm font-bold text-center mb-2">{t(lang, 'scoringTitle', { round: state.currentRound })}</h3>
+              <input type="range" min={-10} max={10} value={score} onChange={e => setScore(Number(e.target.value))} className="w-full accent-blue-500" />
+              <Button variant="primary" className="w-full mt-2" onClick={handleScoreSubmit}>
+                {state.currentRound >= MAX_ROUNDS ? t(lang, 'submitScoreFinal') : t(lang, 'submitScore')}
+              </Button>
+            </section>
+          )}
 
-              <div className="flex flex-col items-center gap-2">
-                <div className={`text-4xl font-extrabold transition-colors ${
-                  score > 0 ? 'text-blue-500' : score < 0 ? 'text-rose-500' : 'text-zinc-400'
-                }`}>
-                  {score > 0 ? `+${score}` : score}
-                </div>
+          {isJudgingPhase && (
+            <section className="bg-amber-100 p-4 rounded-xl border border-amber-300">
+              <h3 className="text-lg font-bold mb-3">调试裁判报告</h3>
 
-                <input
-                  type="range"
-                  min={-10}
-                  max={10}
-                  step={1}
-                  value={score}
-                  onChange={e => setScore(Number(e.target.value))}
-                  className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-blue-500"
-                />
-
-                <div className="flex justify-between w-full text-[10px] text-zinc-400">
-                  <span>{t(lang, 'conWins')}</span>
-                  <span>{t(lang, 'proWins')}</span>
-                </div>
-
-                <Button variant="primary" size="sm" className="w-full mt-1" onClick={handleScoreSubmit}>
-                  {state.currentRound >= MAX_ROUNDS ? t(lang, 'submitScoreFinal') : t(lang, 'submitScore')}
+              {!judgeResult ? (
+                <Button variant="primary" className="w-full" onClick={handleGenerateReport}>
+                  {isJudging ? "生成中..." : "点击生成报告"}
                 </Button>
-              </div>
-            </section>
-          )}
-
-          {takeoverTarget && takeoverPersona && (
-            <section className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🔥</div>
-                <h3 className="text-sm font-bold mb-1">{t(lang, 'humanVsAi')}</h3>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 leading-relaxed whitespace-pre-line">
-                  {t(lang, 'takeoverDesc')}
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={onCancelTakeOver}>
-                    {t(lang, 'takeoverCancel')}
-                  </Button>
-                  <Button variant="primary" size="sm" className="flex-1" onClick={onConfirmTakeOver}>
-                    {t(lang, 'takeoverConfirm')}
-                  </Button>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {state.phase === 'human-vs-ai' && !takeoverTarget && (
-            <section className="space-y-2">
-              {isHumanTurn ? (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                      {t(lang, 'youRepresent', { stance: humanPersonaState ? t(lang, humanPersonaState.stance) : '' })}
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={humanInput}
-                    onChange={e => setHumanInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleHumanSubmit(); } }}
-                    placeholder={t(lang, 'inputPlaceholder')}
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    maxLength={500}
-                  />
-                  <Button variant="primary" size="sm" className="w-full" onClick={handleHumanSubmit} disabled={!humanInput.trim()}>
-                    {t(lang, 'speak')}
-                  </Button>
-                </>
               ) : (
-                <div className="text-center text-xs text-zinc-400 py-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '0.15s' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '0.3s' }} />
-                    <span>{t(lang, 'thinking')}</span>
-                  </div>
-                </div>
+                <pre className="text-[10px] bg-black text-green-400 p-2 overflow-auto max-h-[300px]">
+                  {JSON.stringify(judgeResult, null, 2)}
+                </pre>
               )}
             </section>
           )}
-
-          <section className="pt-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => dispatch({ type: 'RESET' })}
-            >
-              {t(lang, 'backToTopics')}
-            </Button>
-          </section>
+          {/* 人类发言逻辑 */}
+          {state.phase === 'human-vs-ai' && !takeoverTarget && (
+            <section className="space-y-2">
+              <input value={humanInput} onChange={e => setHumanInput(e.target.value)} placeholder={t(lang, 'inputPlaceholder')} className="w-full p-2 border rounded-lg text-sm" />
+              <Button variant="primary" className="w-full" onClick={handleHumanSubmit}>{t(lang, 'speak')}</Button>
+            </section>
+          )}
         </div>
+      </div>
+
+      <div className="p-4 border-t">
+        <Button variant="ghost" size="sm" className="w-full" onClick={() => dispatch({ type: 'RESET' })}>
+          {t(lang, 'backToTopics')}
+        </Button>
       </div>
     </aside>
   );

@@ -6,7 +6,7 @@ import {
   useReducer,
   type ReactNode,
 } from 'react';
-import type { DebateState, DebateAction, DebateMessage } from '@/types/debate';
+import type { DebateState, DebateAction } from '@/types/debate';
 
 const initialState: DebateState = {
   phase: 'topic-select',
@@ -34,10 +34,7 @@ function debateReducer(state: DebateState, action: DebateAction): DebateState {
       return { ...state, topic: action.topic, phase: 'debating' };
 
     case 'ADD_MESSAGE':
-      return {
-        ...state,
-        messages: [...state.messages, action.message],
-      };
+      return { ...state, messages: [...state.messages, action.message] };
 
     case 'SET_STREAMING_CONTENT':
       return { ...state, streamingContent: action.content };
@@ -63,10 +60,7 @@ function debateReducer(state: DebateState, action: DebateAction): DebateState {
       return { ...state, moderatorNote: action.note };
 
     case 'ADD_SCORE':
-      return {
-        ...state,
-        scores: [...state.scores, action.score],
-      };
+      return { ...state, scores: [...state.scores, action.score] };
 
     case 'NEXT_ROUND':
       return {
