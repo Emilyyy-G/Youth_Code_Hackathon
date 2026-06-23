@@ -52,7 +52,7 @@ export const TOPIC_CATEGORIES: TopicCategory[] = [
     topics: [
       { zh: '高中阶段应不应该取消文理分科？', en: 'Should the art-science division be abolished in high school?' },
       { zh: '高中阶段应不应该开设金融理财课程？', en: 'Should high schools offer financial literacy courses?' },
-      { zh: '高考制度应不应该取消？', en: 'Are standardized admissions systems like A-Levels, AP, and IB fairer than national entrance exams?' },
+      { zh: '高考制度应不应该取消？', en: 'Are standardized admissions systems like A-Levels, AP, IB, and SAT fairer than national entrance exams?' },
       { zh: '大学教育是否应该免费？', en: 'Should university education be free?' },
       { zh: '标准化考试是否能够准确衡量学生的能力？', en: 'Do standardized tests accurately measure student ability?' },
       { zh: '学生是否应该在课堂上被允许使用AI工具辅助学习？', en: 'Should students be allowed to use AI tools as learning aids in class?' },
