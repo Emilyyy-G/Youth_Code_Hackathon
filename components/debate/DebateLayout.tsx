@@ -91,7 +91,7 @@ export function DebateLayout() {
     }
   }, [state.topic, state.currentRound, state.messages, state.moderatorNote, dispatch]);
 
-  // Auto-advance debate with 5-second pauses between speakers and before scoring
+  // Auto-advance debate with 2-second pauses between speakers and before scoring
   useEffect(() => {
     if (state.phase !== 'debating' && state.phase !== 'human-vs-ai') return;
     if (state.isStreaming) return;
@@ -107,7 +107,7 @@ export function DebateLayout() {
       pauseTimerRef.current = setTimeout(() => {
         pauseTimerRef.current = null;
         setPauseTick(t => t + 1);
-      }, 5000);
+      }, 2000);
       return;
     }
     lastMsgCountRef.current = msgCount;
