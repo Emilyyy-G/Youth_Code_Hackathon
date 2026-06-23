@@ -46,7 +46,7 @@ export function DebaterColumn({
     el.scrollTop = el.scrollHeight;
   });
 
-  // Tick loop: reveals 3 chars every 15ms using refs to always see latest content
+  // Tick loop: reveals 2 chars every 50ms for comfortable reading pace
   useEffect(() => {
     if (!isStreaming || !isCurrentSpeaker) {
       setRevealed(0);
@@ -56,16 +56,15 @@ export function DebaterColumn({
 
     const interval = setInterval(() => {
       const totalLen = contentRef.current.length;
-      const next = revealedRef.current + 3;
+      const next = revealedRef.current + 2;
       if (next >= totalLen) {
         revealedRef.current = totalLen;
         setRevealed(totalLen);
-        // Don't clear — keep ticking so new chunks are picked up immediately
       } else {
         revealedRef.current = next;
         setRevealed(next);
       }
-    }, 15);
+    }, 50);
 
     return () => clearInterval(interval);
   }, [isStreaming, isCurrentSpeaker]);

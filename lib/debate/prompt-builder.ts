@@ -6,7 +6,12 @@ export function buildDebateSystemPrompt(
   roundNumber: number,
   moderatorNote: string | null,
   language: Language,
+  isFinalRound: boolean = false,
 ): string {
+  const closingTitle = isFinalRound
+    ? (language === 'en' ? 'CLOSING STATEMENT' : '【总结陈词】')
+    : (language === 'en' ? `Round ${roundNumber}` : `第 ${roundNumber} 回合`);
+
   if (language === 'en') {
     const lines: string[] = [
       `You are a debater participating in a Chinese debate. Here are your settings:`,
@@ -29,10 +34,20 @@ export function buildDebateSystemPrompt(
       `7. Output only your own argument — do not simulate your opponent's speech.`,
       `8. Take a clear stance — no ambiguity.`,
       ``,
-      `[CURRENT ROUND]`,
-      `Round ${roundNumber}`,
-      ``,
     ];
+
+    if (isFinalRound) {
+      lines.push(
+        `[CLOSING STATEMENT]`,
+        `This is the FINAL ROUND. You must deliver a powerful closing statement that summarizes your team's core arguments, refutes the opponent's key points, and leaves a lasting impression on the audience.`,
+        `Structure your closing as: (1) brief recap of your strongest argument, (2) final refutation of the opponent, (3) a memorable concluding appeal.`,
+        ``,
+      );
+    }
+
+    lines.push(`[CURRENT ROUND]`);
+    lines.push(closingTitle);
+    lines.push(``);
 
     if (moderatorNote) {
       lines.push(
@@ -69,10 +84,20 @@ export function buildDebateSystemPrompt(
     `7. 每次发言只输出你自己的论述，不要模拟对方的发言。`,
     `8. 每次发言必须立场鲜明，不能模棱两可。`,
     ``,
-    `【当前回合】`,
-    `第 ${roundNumber} 回合`,
-    ``,
   ];
+
+  if (isFinalRound) {
+    lines.push(
+      `【总结陈词】`,
+      `这是最后一轮！你必须发表一段有力的总结陈词，概括己方核心论点、反驳对方关键观点，并给观众留下深刻印象。`,
+      `建议结构：(1) 简要回顾最强论点，(2) 最终反驳对方，(3) 一句令人难忘的号召性收尾。`,
+      ``,
+    );
+  }
+
+  lines.push(`【当前回合】`);
+  lines.push(closingTitle);
+  lines.push(``);
 
   if (moderatorNote) {
     lines.push(

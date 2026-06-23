@@ -1,4 +1,5 @@
 import type { Language } from '@/types/debate';
+import { TOPIC_CATEGORIES } from '@/lib/debate/constants';
 
 const locales: Record<Language, Record<string, string>> = {
   zh: {
@@ -27,7 +28,8 @@ const locales: Record<Language, Record<string, string>> = {
     'thinking': '对方正在思考…',
     'backToTopics': '← 返回选题',
     'appTitle': 'AI 辩论',
-    'appSubtitle': '让 AI 为你展示正反双方的精彩辩论，你也可以亲自上场挑战！',
+    'appSubtitle': '一个由AI驱动的互动辩论平台。观看两个AI围绕热门话题展开激烈辩论，你也可以随时加入人机大战，亲自上场挑战AI辩手！',
+    'appDesc': '选择你感兴趣的话题类别，AI 将为你自动生成正反双方的精彩辩论。每轮结束后你可以为辩手评分，并在辩论结束后获得一份 MBTI 风格的 AI 裁判分析报告。',
     'startDebate': '🎤 开始辩论',
     'featureAiVsAi': '🤖 AI vs AI',
     'featureHumanVsAi': '🆚 人机大战',
@@ -75,16 +77,26 @@ const locales: Record<Language, Record<string, string>> = {
     'rebuttal': '反驳力度',
     'innovation': '论点创新',
     'composure': '情绪控制',
-    'topic_ai_legal_personality': '人工智能应不应该拥有法律人格？',
-    'topic_short_video': '短视频平台对学生利大于弊还是弊大于利？',
-    'topic_liberal_arts': '高中阶段应不应该取消文理分科？',
-    'topic_fireworks': '大城市应不应该全面禁止燃放烟花爆竹？',
-    'topic_real_name': '网络实名制是利大于弊还是弊大于利？',
-    'topic_finance_course': '高中阶段应不应该开设金融理财课程？',
-    'topic_ai_copyright': '人工智能创作的作品是否享有版权？',
-    'topic_smartphone': '学校应不应该禁止学生使用智能手机？',
-    'topic_gaokao': '高考制度应不应该取消？',
-    'topic_cloning': '克隆技术的研究应不应该被严格限制？',
+    'highlights': '🎬 精彩回顾',
+    'keyMoments': '辩论亮点',
+    'rateDebate': '⭐ 评价本场辩论',
+    'rateDebateDesc': '你对这场辩论的总体感受如何？',
+    'rateSubmit': '提交评价',
+    'rateThanks': '感谢你的评价！',
+    'yourRating': '你的评分',
+    'excellent': '非常精彩',
+    'good': '不错',
+    'average': '一般',
+    'poor': '较差',
+    'terrible': '很差',
+    'categoryTitle': '选择话题类别',
+    'categoryDesc': '选择一个你感兴趣的领域',
+    'cat_tech': '科技',
+    'cat_society': '社会',
+    'cat_education': '教育',
+    'cat_ethics': '伦理',
+    'cat_environment': '环境',
+    'cat_lifestyle': '生活方式',
   },
   en: {
     'back': '← Back',
@@ -112,7 +124,8 @@ const locales: Record<Language, Record<string, string>> = {
     'thinking': 'Opponent is thinking…',
     'backToTopics': '← Back to Topics',
     'appTitle': 'AI Debate',
-    'appSubtitle': 'Watch two AIs debate both sides, or jump in and challenge them yourself!',
+    'appSubtitle': 'An AI-powered interactive debate platform. Watch two AIs debate hot topics, or jump into human-vs-AI mode and challenge the debaters yourself!',
+    'appDesc': 'Pick a topic category and AI will generate a lively debate between two sides. Score each round, and at the end receive an MBTI-style judge report with personality analysis.',
     'startDebate': '🎤 Start Debate',
     'featureAiVsAi': '🤖 AI vs AI',
     'featureHumanVsAi': '🆚 Human vs AI',
@@ -160,16 +173,26 @@ const locales: Record<Language, Record<string, string>> = {
     'rebuttal': 'Rebuttal',
     'innovation': 'Innovation',
     'composure': 'Composure',
-    'topic_ai_legal_personality': 'Should AI be granted legal personality?',
-    'topic_short_video': 'Do short video platforms do more harm than good to students?',
-    'topic_liberal_arts': 'Should the art-science division be abolished in high school?',
-    'topic_fireworks': 'Should fireworks be completely banned in big cities?',
-    'topic_real_name': 'Is the real-name system on the internet beneficial or harmful?',
-    'topic_finance_course': 'Should high schools offer financial literacy courses?',
-    'topic_ai_copyright': 'Should AI-generated works be eligible for copyright?',
-    'topic_smartphone': 'Should schools ban students from using smartphones?',
-    'topic_gaokao': 'Should the Gaokao (college entrance exam) be abolished?',
-    'topic_cloning': 'Should cloning technology research be strictly restricted?',
+    'highlights': '🎬 Highlights',
+    'keyMoments': 'Key Moments',
+    'rateDebate': '⭐ Rate This Debate',
+    'rateDebateDesc': 'How was the overall debate experience?',
+    'rateSubmit': 'Submit Rating',
+    'rateThanks': 'Thanks for your rating!',
+    'yourRating': 'Your Rating',
+    'excellent': 'Excellent',
+    'good': 'Good',
+    'average': 'Average',
+    'poor': 'Poor',
+    'terrible': 'Terrible',
+    'categoryTitle': 'Choose a Category',
+    'categoryDesc': 'Pick an area that interests you',
+    'cat_tech': 'Technology',
+    'cat_society': 'Society',
+    'cat_education': 'Education',
+    'cat_ethics': 'Ethics',
+    'cat_environment': 'Environment',
+    'cat_lifestyle': 'Lifestyle',
   },
 };
 
@@ -189,25 +212,15 @@ export function t(lang: Language, key: string, params?: Record<string, string | 
   return text;
 }
 
-const topicKeyMap: Record<string, string> = {
-  '人工智能应不应该拥有法律人格？': 'topic_ai_legal_personality',
-  '短视频平台对学生利大于弊还是弊大于利？': 'topic_short_video',
-  '高中阶段应不应该取消文理分科？': 'topic_liberal_arts',
-  '大城市应不应该全面禁止燃放烟花爆竹？': 'topic_fireworks',
-  '网络实名制是利大于弊还是弊大于利？': 'topic_real_name',
-  '高中阶段应不应该开设金融理财课程？': 'topic_finance_course',
-  '人工智能创作的作品是否享有版权？': 'topic_ai_copyright',
-  '学校应不应该禁止学生使用智能手机？': 'topic_smartphone',
-  '高考制度应不应该取消？': 'topic_gaokao',
-  '克隆技术的研究应不应该被严格限制？': 'topic_cloning',
-};
+const topicFlatMap: Record<string, string> = {};
+for (const cat of TOPIC_CATEGORIES) {
+  for (const t of cat.topics) {
+    topicFlatMap[t.zh] = t.en;
+    topicFlatMap[t.en] = t.en;
+  }
+}
 
 export function translateTopic(lang: Language, topic: string): string {
   if (lang === 'zh') return topic;
-  const key = topicKeyMap[topic];
-  if (key) {
-    const translated = locales.en[key];
-    if (translated) return translated;
-  }
-  return topic;
+  return topicFlatMap[topic] || topic;
 }
