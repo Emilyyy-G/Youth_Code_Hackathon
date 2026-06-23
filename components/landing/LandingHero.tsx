@@ -11,18 +11,26 @@ export function LandingHero() {
   const lang = state.language;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center text-center px-4 relative">
+    <div className="flex flex-1 flex-col items-center justify-center text-center px-4 py-12 relative">
       <div className="absolute top-4 right-4">
         <LanguageSwitch />
       </div>
 
-      <div className="mb-8">
-        <div className="text-6xl mb-4">⚖️</div>
+      {/* Welcome header */}
+      <div className="mb-6">
+        <div className="text-6xl mb-3">⚖️</div>
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
           {t(lang, 'appTitle')}
         </h1>
-        <p className="mt-3 text-lg text-zinc-500 dark:text-zinc-400 max-w-md">
+        <p className="mt-3 text-base sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed">
           {t(lang, 'appSubtitle')}
+        </p>
+      </div>
+
+      {/* App description card */}
+      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-5 max-w-lg w-full mb-8 text-left">
+        <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+          {t(lang, 'appDesc')}
         </p>
       </div>
 
@@ -32,21 +40,22 @@ export function LandingHero() {
         </Button>
       </Link>
 
-      <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-lg">
+      {/* Feature steps */}
+      <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-lg">
         <div className="text-center">
-          <div className="text-2xl mb-1">🤖</div>
-          <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t(lang, 'featureAiVsAi')}</div>
-          <div className="text-xs text-zinc-400">{t(lang, 'featureAiVsAiDesc')}</div>
+          <div className="text-2xl mb-1">🎯</div>
+          <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t(lang, 'chooseTopicTitle')}</div>
+          <div className="text-xs text-zinc-400 mt-0.5">{t(lang, 'chooseTopicDesc')}</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl mb-1">🆚</div>
-          <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t(lang, 'featureHumanVsAi')}</div>
-          <div className="text-xs text-zinc-400">{t(lang, 'featureHumanVsAiDesc')}</div>
+          <div className="text-2xl mb-1">🤖</div>
+          <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t(lang, 'featureAiVsAi')}</div>
+          <div className="text-xs text-zinc-400 mt-0.5">{t(lang, 'featureAiVsAiDesc')}</div>
         </div>
         <div className="text-center">
           <div className="text-2xl mb-1">📊</div>
-          <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t(lang, 'featureScoring')}</div>
-          <div className="text-xs text-zinc-400">{t(lang, 'featureScoringDesc')}</div>
+          <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t(lang, 'featureScoring')}</div>
+          <div className="text-xs text-zinc-400 mt-0.5">{t(lang, 'featureScoringDesc')}</div>
         </div>
       </div>
     </div>
