@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import type { Persona, DebateMessage } from '@/types/debate';
+import { useDebate } from '@/lib/store/debate-context';
+import { t } from '@/lib/debate/i18n';
 import { AAvatar } from './AAvatar';
 import { SpeechBubble } from './SpeechBubble';
 
@@ -25,15 +28,55 @@ export function DebaterColumn({
   isHumanControlled,
   onTakeOver,
 }: DebaterColumnProps) {
-  const orderClass =
-    side === 'left'
-      ? 'flex-row'
-      : 'flex-row-reverse';
+  const { state } = useDebate();
+  const lang = state.language;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const orderClass = side === 'left' ? 'flex-row' : 'flex-row-reverse';
+
+  // Fast consistent character-by-character reveal
+  const [revealed, setRevealed] = useState(0);
+  const revealedRef = useRef(0);
+  const contentRef = useRef(streamingContent);
+  contentRef.current = streamingContent;
+
+  // Auto-scroll
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  });
+
+  // Tick loop: reveals 3 chars every 15ms using refs to always see latest content
+  useEffect(() => {
+    if (!isStreaming || !isCurrentSpeaker) {
+      setRevealed(0);
+      revealedRef.current = 0;
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const totalLen = contentRef.current.length;
+      const next = revealedRef.current + 3;
+      if (next >= totalLen) {
+        revealedRef.current = totalLen;
+        setRevealed(totalLen);
+        // Don't clear — keep ticking so new chunks are picked up immediately
+      } else {
+        revealedRef.current = next;
+        setRevealed(next);
+      }
+    }, 15);
+
+    return () => clearInterval(interval);
+  }, [isStreaming, isCurrentSpeaker]);
+
+  const displayedContent = streamingContent.slice(0, revealed);
+  const fullyRevealed = revealed >= streamingContent.length;
+  const showCursor = isStreaming && isCurrentSpeaker && !fullyRevealed && streamingContent.length > 0;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      {/* Scrollable message area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+    <div className="flex-1 flex flex-col min-h-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${orderClass} gap-3`}>
             {side === 'left' && (
@@ -66,7 +109,6 @@ export function DebaterColumn({
           </div>
         ))}
 
-        {/* Streaming bubble */}
         {isStreaming && isCurrentSpeaker && streamingContent && (
           <div className={`flex ${orderClass} gap-3`}>
             {side === 'left' && (
@@ -84,14 +126,14 @@ export function DebaterColumn({
                 message={{
                   id: 'streaming',
                   personaId: persona.id,
-                  content: streamingContent,
+                  content: displayedContent,
                   round: 0,
                   timestamp: Date.now(),
                   vote: 0,
                 }}
                 side={side}
                 color={persona.color}
-                isStreaming
+                isStreaming={showCursor}
               />
             </div>
             {side === 'right' && (
@@ -107,7 +149,6 @@ export function DebaterColumn({
           </div>
         )}
 
-        {/* Thinking indicator */}
         {isStreaming && isCurrentSpeaker && !streamingContent && (
           <div className={`flex ${orderClass} gap-3`}>
             {side === 'left' && (
@@ -147,10 +188,9 @@ export function DebaterColumn({
         )}
       </div>
 
-      {/* Bottom spacer */}
       {!messages.length && !isStreaming && (
         <div className="flex-1 flex items-center justify-center text-sm text-zinc-400">
-          等待辩论开始...
+          {t(lang, 'waiting')}
         </div>
       )}
     </div>

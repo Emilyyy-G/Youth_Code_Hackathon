@@ -6,21 +6,16 @@ import { PERSONAS, MAX_ROUNDS } from '@/lib/debate/constants';
 import { getNextSpeaker, isRoundComplete, buildMessageHistory } from '@/lib/debate/engine';
 import { buildDebateSystemPrompt } from '@/lib/debate/prompt-builder';
 import { DebaterColumn } from './DebaterColumn';
-import { ScoringPanel } from '@/components/overlays/ScoringPanel';
-import { PauseOverlay } from '@/components/overlays/PauseOverlay';
-import { TakeoverModal } from '@/components/overlays/TakeoverModal';
-import { HumanInput } from '@/components/overlays/HumanInput';
+import { Dashboard } from './Dashboard';
 import type { PersonaId } from '@/types/debate';
 
 export function DebateLayout() {
   const { state, dispatch } = useDebate();
   const abortRef = useRef<AbortController | null>(null);
-  const [showTakeoverModal, setShowTakeoverModal] = useState(false);
-  const [selectedPersona, setSelectedPersona] = useState<PersonaId | null>(null);
+  const [takeoverTarget, setTakeoverTarget] = useState<PersonaId | null>(null);
 
   const generateDebateResponse = useCallback(async (personaId: PersonaId) => {
     if (personaId === 'human') return;
-
     const persona = PERSONAS[personaId];
     if (!persona) return;
 
@@ -34,16 +29,18 @@ export function DebateLayout() {
     try {
       const history = buildMessageHistory(state.messages);
       const systemPrompt = buildDebateSystemPrompt(
-        state.topic,
-        persona,
-        state.currentRound,
-        state.moderatorNote,
+        state.topic, persona, state.currentRound, state.moderatorNote,
       );
+
+      // AI SDK requires at least one message; seed with a starter if empty
+      const messages = history.length > 0
+        ? history
+        : [{ role: 'user' as const, content: `请作为${persona.displayName}开始你的辩论发言。` }];
 
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, system: systemPrompt }),
+        body: JSON.stringify({ messages, system: systemPrompt }),
         signal: controller.signal,
       });
 
@@ -57,12 +54,12 @@ export function DebateLayout() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        fullContent += chunk;
+        fullContent += decoder.decode(value, { stream: true });
         dispatch({ type: 'SET_STREAMING_CONTENT', content: fullContent });
       }
 
-      // Save complete message
+      if (!fullContent.trim()) throw new Error('Empty response');
+
       dispatch({
         type: 'ADD_MESSAGE',
         message: {
@@ -74,10 +71,10 @@ export function DebateLayout() {
           vote: 0,
         },
       });
-
       dispatch({ type: 'CLEAR_STREAMING' });
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
+      console.error('generateDebateResponse error:', err);
       dispatch({ type: 'SET_ERROR', error: String(err) });
     } finally {
       dispatch({ type: 'SET_STREAMING', isStreaming: false });
@@ -87,116 +84,100 @@ export function DebateLayout() {
 
   // Auto-advance debate
   useEffect(() => {
-    if (state.isStreaming || state.error) return;
     if (state.phase !== 'debating' && state.phase !== 'human-vs-ai') return;
+    if (state.isStreaming) return;
+    if (state.error) return;
 
     const isHumanVsAi = state.phase === 'human-vs-ai';
 
-    // Check if round is complete (both have spoken)
     if (isRoundComplete(state.messages, state.currentRound)) {
-      // Don't auto-advance to scoring on last round
-      if (state.currentRound >= MAX_ROUNDS) return;
       dispatch({ type: 'SET_PHASE', phase: 'scoring' });
       return;
     }
 
     const nextSpeaker = getNextSpeaker(
-      state.messages,
-      state.currentRound,
-      isHumanVsAi,
-      state.humanPersona,
+      state.messages, state.currentRound, isHumanVsAi, state.humanPersona,
     );
 
     if (nextSpeaker === null) {
-      // Round complete
-      if (state.currentRound >= MAX_ROUNDS) return;
       dispatch({ type: 'SET_PHASE', phase: 'scoring' });
       return;
     }
 
-    if (nextSpeaker === 'human') {
-      // Wait for human input — HumanInput component handles this
-      return;
-    }
+    if (nextSpeaker === 'human') return;
 
-    // AI's turn
     generateDebateResponse(nextSpeaker);
-  }, [state.phase, state.messages, state.currentRound, state.isStreaming, state.error, state.humanPersona, state.moderatorNote, dispatch, generateDebateResponse]);
+  }, [state.phase, state.messages, state.currentRound, state.isStreaming, state.error,
+      state.humanPersona, state.moderatorNote, dispatch, generateDebateResponse]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, []);
-
-  const handleTakeOver = (personaId: PersonaId) => {
-    setSelectedPersona(personaId);
-    setShowTakeoverModal(true);
-  };
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const confirmTakeOver = () => {
-    if (selectedPersona) {
-      dispatch({ type: 'SET_HUMAN_PERSONA', personaId: selectedPersona });
+    if (takeoverTarget) {
+      dispatch({ type: 'SET_HUMAN_PERSONA', personaId: takeoverTarget });
       dispatch({ type: 'SET_PHASE', phase: 'human-vs-ai' });
     }
-    setShowTakeoverModal(false);
-    setSelectedPersona(null);
+    setTakeoverTarget(null);
   };
 
-  const ai1Messages = state.messages.filter(m => m.personaId === 'ai1' || (m.personaId === 'human' && state.humanPersona === 'ai1'));
-  const ai2Messages = state.messages.filter(m => m.personaId === 'ai2' || (m.personaId === 'human' && state.humanPersona === 'ai2'));
-  const ai1IsCurrentSpeaker = state.currentSpeaker === 'ai1' || (state.currentSpeaker === 'human' && state.humanPersona === 'ai1');
-  const ai2IsCurrentSpeaker = state.currentSpeaker === 'ai2' || (state.currentSpeaker === 'human' && state.humanPersona === 'ai2');
+  const ai1Messages = state.messages.filter(
+    m => m.personaId === 'ai1' || (m.personaId === 'human' && state.humanPersona === 'ai1'),
+  );
+  const ai2Messages = state.messages.filter(
+    m => m.personaId === 'ai2' || (m.personaId === 'human' && state.humanPersona === 'ai2'),
+  );
+  const ai1IsSpeaker = state.currentSpeaker === 'ai1' || (state.currentSpeaker === 'human' && state.humanPersona === 'ai1');
+  const ai2IsSpeaker = state.currentSpeaker === 'ai2' || (state.currentSpeaker === 'human' && state.humanPersona === 'ai2');
 
   return (
-    <div className="flex-1 flex relative overflow-hidden">
-      {/* AI1 (Pro/正方) - Left column */}
-      <div className="flex-1 flex border-r border-zinc-200 dark:border-zinc-700">
-        <DebaterColumn
-          persona={PERSONAS.ai1}
-          messages={ai1Messages}
-          side="left"
-          isStreaming={state.isStreaming}
-          streamingContent={state.currentSpeaker === 'ai1' ? state.streamingContent : ''}
-          isCurrentSpeaker={ai1IsCurrentSpeaker}
-          isHumanControlled={state.humanPersona === 'ai1'}
-          onTakeOver={() => handleTakeOver('ai1')}
-        />
-      </div>
-
-      {/* AI2 (Con/反方) - Right column */}
-      <div className="flex-1 flex">
-        <DebaterColumn
-          persona={PERSONAS.ai2}
-          messages={ai2Messages}
-          side="right"
-          isStreaming={state.isStreaming}
-          streamingContent={state.currentSpeaker === 'ai2' ? state.streamingContent : ''}
-          isCurrentSpeaker={ai2IsCurrentSpeaker}
-          isHumanControlled={state.humanPersona === 'ai2'}
-          onTakeOver={() => handleTakeOver('ai2')}
-        />
-      </div>
-
-      {/* Score bar at bottom */}
-      {state.scores.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-          <div className="mb-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full text-xs text-zinc-500">
-            总分: {state.scores.reduce((s, sc) => s + sc.score, 0)} / {state.scores.length * 10}
-          </div>
+    <div className="flex-1 flex min-h-0 relative">
+      {/* Error banner */}
+      {state.error && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-40 px-4 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl shadow-lg flex items-center gap-3">
+          <span className="text-xs text-red-600 dark:text-red-400">{'⚠️'} {state.error}</span>
+          <button
+            onClick={() => dispatch({ type: 'SET_ERROR', error: null })}
+            className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 underline whitespace-nowrap"
+          >
+            重试
+          </button>
         </div>
       )}
+      {/* Left debate area */}
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 border-r border-zinc-200 dark:border-zinc-700">
+          <DebaterColumn
+            persona={PERSONAS.ai1}
+            messages={ai1Messages}
+            side="left"
+            isStreaming={state.isStreaming}
+            streamingContent={state.currentSpeaker === 'ai1' ? state.streamingContent : ''}
+            isCurrentSpeaker={ai1IsSpeaker}
+            isHumanControlled={state.humanPersona === 'ai1'}
+            onTakeOver={() => setTakeoverTarget('ai1')}
+          />
+        </div>
 
-      {/* Overlays */}
-      <ScoringPanel />
-      <PauseOverlay />
-      <TakeoverModal
-        open={showTakeoverModal}
-        onClose={() => setShowTakeoverModal(false)}
-        onConfirm={confirmTakeOver}
+        <div className="flex-1 flex flex-col min-h-0">
+          <DebaterColumn
+            persona={PERSONAS.ai2}
+            messages={ai2Messages}
+            side="right"
+            isStreaming={state.isStreaming}
+            streamingContent={state.currentSpeaker === 'ai2' ? state.streamingContent : ''}
+            isCurrentSpeaker={ai2IsSpeaker}
+            isHumanControlled={state.humanPersona === 'ai2'}
+            onTakeOver={() => setTakeoverTarget('ai2')}
+          />
+        </div>
+      </div>
+
+      {/* Right Dashboard sidebar */}
+      <Dashboard
+        takeoverTarget={takeoverTarget}
+        onConfirmTakeOver={confirmTakeOver}
+        onCancelTakeOver={() => setTakeoverTarget(null)}
       />
-      <HumanInput />
     </div>
   );
 }

@@ -5,9 +5,11 @@ export type DebatePhase =
   | 'debating'
   | 'paused'
   | 'scoring'
-  | 'human-vs-ai';
+  | 'human-vs-ai'
+  | 'judging';
 
 export type Stance = 'pro' | 'con';
+export type Language = 'zh' | 'en';
 
 export interface Persona {
   id: PersonaId;
@@ -34,6 +36,30 @@ export interface RoundScore {
   timestamp: number;
 }
 
+export interface JudgeDimension {
+  label: string;
+  score: number;
+  description: string;
+}
+
+export interface DebaterReport {
+  personaId: PersonaId;
+  mbti: string;
+  title: string;
+  strengths: string[];
+  weaknesses: string[];
+  dimensions: JudgeDimension[];
+  bestQuote: string;
+}
+
+export interface JudgeReport {
+  topic: string;
+  winner: 'ai1' | 'ai2' | 'tie';
+  summary: string;
+  debaters: [DebaterReport, DebaterReport];
+  totalRounds: number;
+}
+
 export interface DebateState {
   phase: DebatePhase;
   topic: string;
@@ -46,6 +72,9 @@ export interface DebateState {
   currentSpeaker: PersonaId | null;
   streamingContent: string;
   error: string | null;
+  language: Language;
+  judgeReport: JudgeReport | null;
+  judgeLoading: boolean;
 }
 
 export type DebateAction =
@@ -62,4 +91,7 @@ export type DebateAction =
   | { type: 'NEXT_ROUND' }
   | { type: 'SET_HUMAN_PERSONA'; personaId: PersonaId | null }
   | { type: 'SET_ERROR'; error: string | null }
+  | { type: 'SET_LANGUAGE'; language: Language }
+  | { type: 'SET_JUDGE_REPORT'; report: JudgeReport }
+  | { type: 'SET_JUDGE_LOADING'; loading: boolean }
   | { type: 'RESET' };
