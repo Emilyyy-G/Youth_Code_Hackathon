@@ -20,7 +20,7 @@ const initialState: DebateState = {
   currentSpeaker: null,
   streamingContent: '',
   error: null,
-  language: 'zh',
+  language: 'en',
   judgeReport: null,
   judgeLoading: false,
 };
