@@ -33,11 +33,13 @@ export function DebaterColumn({
   const scrollRef = useRef<HTMLDivElement>(null);
   const orderClass = side === 'left' ? 'flex-row' : 'flex-row-reverse';
 
-  // Fast consistent character-by-character reveal
+  // Smooth character reveal — time-based, exactly 40 chars/sec (1 char per 25ms)
+  const CHAR_RATE = 40;
   const [revealed, setRevealed] = useState(0);
-  const revealedRef = useRef(0);
-  const contentRef = useRef(streamingContent);
-  contentRef.current = streamingContent;
+  const startTimeRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const contentLenRef = useRef(0);
+  // contentLenRef is updated synchronously in render below
 
   const displayedContent = streamingContent.slice(0, revealed);
   const fullyRevealed = revealed >= streamingContent.length;
@@ -50,28 +52,48 @@ export function DebaterColumn({
     el.scrollTo({ top: el.scrollHeight, behavior: 'instant' });
   }, [messages.length, displayedContent, isStreaming, isCurrentSpeaker, revealed]);
 
-  // Tick loop: reveals 2 chars every 50ms for comfortable reading pace
+  // Time-based reveal loop using requestAnimationFrame
+  // rAF runs continuously while speaking, delivering exactly 40 chars/sec
+  // New API chunks are picked up naturally via contentLenRef.current
   useEffect(() => {
     if (!isStreaming || !isCurrentSpeaker) {
       setRevealed(0);
-      revealedRef.current = 0;
+      startTimeRef.current = 0;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
       return;
     }
 
-    const interval = setInterval(() => {
-      const totalLen = contentRef.current.length;
-      const next = revealedRef.current + 2;
-      if (next >= totalLen) {
-        revealedRef.current = totalLen;
-        setRevealed(totalLen);
-      } else {
-        revealedRef.current = next;
-        setRevealed(next);
-      }
-    }, 50);
+    if (startTimeRef.current === 0) {
+      startTimeRef.current = performance.now();
+    }
 
-    return () => clearInterval(interval);
+    function tick(now: number) {
+      const elapsed = now - startTimeRef.current;
+      // Ensure at least 1 char is shown on first frame
+      const rawTarget = elapsed / (1000 / CHAR_RATE);
+      const target = Math.max(1, Math.floor(rawTarget));
+      const maxLen = contentLenRef.current;
+
+      if (target >= maxLen) {
+        setRevealed(maxLen);
+      } else {
+        setRevealed(target);
+      }
+      // Keep ticking indefinitely — new chunks are picked up naturally
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
   }, [isStreaming, isCurrentSpeaker]);
+
+  // Keep ref in sync with latest content length
+  contentLenRef.current = streamingContent.length;
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
