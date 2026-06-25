@@ -84,6 +84,7 @@ export function buildDebateSystemPrompt(
       `3. Maintain debate etiquette — be polite but firm in defending your position.`,
       `4. Output only your own argument — do not simulate your opponent's speech.`,
       `5. Take a clear stance — no ambiguity.`,
+      `6. **CRITICAL: You MUST speak in English. Output ONLY in English.**`,
       ``,
     ];
 
