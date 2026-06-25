@@ -34,7 +34,6 @@ export function DebateLayout() {
       const history = buildMessageHistory(state.messages);
       const systemPrompt = buildDebateSystemPrompt(
         state.topic, persona, state.currentRound, state.moderatorNote, state.language,
-        state.currentRound >= MAX_ROUNDS,
       );
 
       // AI SDK requires at least one message; seed with a starter if empty
