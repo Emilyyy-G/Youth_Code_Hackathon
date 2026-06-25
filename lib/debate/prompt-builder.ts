@@ -1,4 +1,54 @@
 import type { Persona, Language } from '@/types/debate';
+import { ROUND_TYPES } from './constants';
+
+export type RoundType = (typeof ROUND_TYPES)[number];
+
+const roundTypeConfig: Record<RoundType, {
+  wordLimit: string;
+  enWordLimit: string;
+  zhTitle: string;
+  enTitle: string;
+  zhInstruction: string;
+  enInstruction: string;
+}> = {
+  opening: {
+    wordLimit: '80-120字',
+    enWordLimit: '80-120 words',
+    zhTitle: '开篇立论',
+    enTitle: 'Opening Statement',
+    zhInstruction: '这是你的开篇立论。请清晰阐述己方核心论点，为整场辩论奠定基调，做到开门见山、立场鲜明。',
+    enInstruction: 'This is your opening statement. Clearly present your core argument, set the tone for the debate, and establish your position firmly.',
+  },
+  'rebuttal-1': {
+    wordLimit: '50-80字',
+    enWordLimit: '50-80 words',
+    zhTitle: '第一轮反驳',
+    enTitle: 'First Rebuttal',
+    zhInstruction: '这是第一轮反驳。请直接回应对手观点，指出对方逻辑漏洞，并强化自己的论据。',
+    enInstruction: 'This is your first rebuttal. Directly address the opponent\'s points, identify logical gaps, and reinforce your own argument.',
+  },
+  'rebuttal-2': {
+    wordLimit: '50-80字',
+    enWordLimit: '50-80 words',
+    zhTitle: '第二轮反驳',
+    enTitle: 'Second Rebuttal',
+    zhInstruction: '这是第二轮反驳。请进一步深化反驳，针对对手的最新论点进行有力回击，巩固己方立场。',
+    enInstruction: 'This is your second rebuttal. Deepen your counter-arguments, strike back against the opponent\'s latest points, and solidify your position.',
+  },
+  closing: {
+    wordLimit: '30-60字',
+    enWordLimit: '30-60 words',
+    zhTitle: '总结陈词',
+    enTitle: 'Closing Statement',
+    zhInstruction: '这是总结陈词！请精炼回顾己方最强论点，指出对手未能解决的核心问题，并以一句有力的话收尾。',
+    enInstruction: 'This is your closing statement! Briefly recap your strongest argument, highlight the core issue the opponent failed to address, and end with a powerful final remark.',
+  },
+};
+
+export function getRoundType(roundNumber: number): RoundType {
+  const idx = Math.min(Math.max(roundNumber - 1, 0), ROUND_TYPES.length - 1);
+  return ROUND_TYPES[idx];
+}
 
 export function buildDebateSystemPrompt(
   topic: string,
@@ -8,13 +58,12 @@ export function buildDebateSystemPrompt(
   language: Language,
   isFinalRound: boolean = false,
 ): string {
-  const closingTitle = isFinalRound
-    ? (language === 'en' ? 'CLOSING STATEMENT' : '【总结陈词】')
-    : (language === 'en' ? `Round ${roundNumber}` : `第 ${roundNumber} 回合`);
+  const roundType = getRoundType(roundNumber);
+  const config = roundTypeConfig[roundType];
 
   if (language === 'en') {
     const lines: string[] = [
-      `You are a debater participating in a Chinese debate. Here are your settings:`,
+      `You are a debater participating in a debate. Here are your settings:`,
       ``,
       `[DEBATE TOPIC]`,
       topic,
@@ -24,30 +73,19 @@ export function buildDebateSystemPrompt(
       `Stance: ${persona.stance === 'pro' ? 'Pro (supporting)' : 'Con (opposing)'}`,
       `Style: ${persona.personality === '逻辑严密，擅长使用数据和事实论证，风格理性且富有攻击性。' ? 'Logical and rigorous, good at using data and facts, rational and aggressive.' : 'Witty and humorous, good at analogies and reductio ad absurdum, appeals to emotion and values.'}`,
       ``,
-      `[DEBATE RULES]`,
+      `[ABOUT THIS SPEECH]`,
+      `Type: ${config.enTitle}`,
+      `Word limit: ${config.enWordLimit}. Be concise and impactful.`,
+      `${config.enInstruction}`,
+      ``,
+      `[GENERAL RULES]`,
       `1. You are debating another AI debater with the opposite stance.`,
-      `2. Speak in English. Keep each speech to around 100 words. Be concise and impactful.`,
-      `3. Directly respond to your opponent's arguments, refute them, and present your own evidence.`,
-      `4. Use logic, data, historical cases, or philosophical reasoning to support your arguments.`,
-      `5. Use **bold** to mark the single most important keyword or core argument in each sentence.`,
-      `6. Maintain debate etiquette — be polite but firm in defending your position.`,
-      `7. Output only your own argument — do not simulate your opponent's speech.`,
-      `8. Take a clear stance — no ambiguity.`,
+      `2. Use **bold** to mark the single most important keyword or core argument in each sentence.`,
+      `3. Maintain debate etiquette — be polite but firm in defending your position.`,
+      `4. Output only your own argument — do not simulate your opponent's speech.`,
+      `5. Take a clear stance — no ambiguity.`,
       ``,
     ];
-
-    if (isFinalRound) {
-      lines.push(
-        `[CLOSING STATEMENT]`,
-        `This is the FINAL ROUND. You must deliver a powerful closing statement that summarizes your team's core arguments, refutes the opponent's key points, and leaves a lasting impression on the audience.`,
-        `Structure your closing as: (1) brief recap of your strongest argument, (2) final refutation of the opponent, (3) a memorable concluding appeal.`,
-        ``,
-      );
-    }
-
-    lines.push(`[CURRENT ROUND]`);
-    lines.push(closingTitle);
-    lines.push(``);
 
     if (moderatorNote) {
       lines.push(
@@ -58,7 +96,7 @@ export function buildDebateSystemPrompt(
       );
     }
 
-    lines.push(`Begin your argument:`);
+    lines.push(`Begin your ${config.enTitle.toLowerCase()}:`);
     return lines.join('\n');
   }
 
@@ -74,30 +112,19 @@ export function buildDebateSystemPrompt(
     `你的立场：${persona.stanceLabel}（${persona.stance === 'pro' ? '支持' : '反对'}该观点）`,
     `你的风格：${persona.personality}`,
     ``,
+    `【本轮说明】`,
+    `类型：${config.zhTitle}`,
+    `字数限制：${config.wordLimit}，言简意赅。`,
+    config.zhInstruction,
+    ``,
     `【辩论规则】`,
     `1. 你正在与另一位持相反立场的AI辩手进行辩论。`,
-    `2. 请用中文发言，**每次发言控制在100字左右**，做到言简意赅、一针见血。`,
-    `3. 你的发言应当直接回应对手的观点，进行反驳，并阐述你自己的论据。`,
-    `4. 你可以使用逻辑推理、数据事实、历史案例、哲理思考等方式来支撑你的观点。`,
-    `5. 用**加粗**标出你每句话中最重要的关键词或核心论点（每句话只加粗1-2个关键短语）。`,
-    `6. 保持辩论礼仪，有礼貌但坚定地捍卫你的立场。`,
-    `7. 每次发言只输出你自己的论述，不要模拟对方的发言。`,
-    `8. 每次发言必须立场鲜明，不能模棱两可。`,
+    `2. 用**加粗**标出你每句话中最重要的关键词或核心论点。`,
+    `3. 保持辩论礼仪，有礼貌但坚定地捍卫你的立场。`,
+    `4. 每次发言只输出你自己的论述，不要模拟对方的发言。`,
+    `5. 每次发言必须立场鲜明，不能模棱两可。`,
     ``,
   ];
-
-  if (isFinalRound) {
-    lines.push(
-      `【总结陈词】`,
-      `这是最后一轮！你必须发表一段有力的总结陈词，概括己方核心论点、反驳对方关键观点，并给观众留下深刻印象。`,
-      `建议结构：(1) 简要回顾最强论点，(2) 最终反驳对方，(3) 一句令人难忘的号召性收尾。`,
-      ``,
-    );
-  }
-
-  lines.push(`【当前回合】`);
-  lines.push(closingTitle);
-  lines.push(``);
 
   if (moderatorNote) {
     lines.push(
@@ -108,6 +135,6 @@ export function buildDebateSystemPrompt(
     );
   }
 
-  lines.push(`请开始你的辩论发言：`);
+  lines.push(`请开始你的${config.zhTitle}：`);
   return lines.join('\n');
 }

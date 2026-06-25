@@ -98,6 +98,13 @@ export const TOPIC_CATEGORIES: TopicCategory[] = [
 
 export const DEFAULT_TOPICS = TOPIC_CATEGORIES.flatMap(c => c.topics.map(t => t.zh));
 
-export const MAX_ROUNDS = 5;
+export const MAX_ROUNDS = 4;
+
+// Round types for the 8-speech structure:
+// Round 1: 开篇 opening   (80-120 words)
+// Round 2: 反驳1 rebuttal (50-80 words)
+// Round 3: 反驳2 rebuttal (50-80 words)
+// Round 4: 总结 closing   (30-60 words)
+export const ROUND_TYPES = ['opening', 'rebuttal-1', 'rebuttal-2', 'closing'] as const;
 
 export const TURN_ORDER = ['ai1', 'ai2'] as const;
