@@ -5,7 +5,7 @@ import { useDebate } from '@/lib/store/debate-context';
 import { PERSONAS, MAX_ROUNDS } from '@/lib/debate/constants';
 import { getNextSpeaker, isRoundComplete, buildMessageHistory } from '@/lib/debate/engine';
 import { buildDebateSystemPrompt } from '@/lib/debate/prompt-builder';
-import { t } from '@/lib/debate/i18n';
+import { t, translateTopic } from '@/lib/debate/i18n';
 import { DebaterColumn } from './DebaterColumn';
 import { Dashboard } from './Dashboard';
 import type { PersonaId } from '@/types/debate';
@@ -31,13 +31,14 @@ export function DebateLayout() {
     dispatch({ type: 'SET_SPEAKER', personaId });
 
     try {
+      const lang = state.language;
+      const translatedTopic = translateTopic(lang, state.topic);
       const history = buildMessageHistory(state.messages);
       const systemPrompt = buildDebateSystemPrompt(
-        state.topic, persona, state.currentRound, state.moderatorNote, state.language,
+        translatedTopic, persona, state.currentRound, state.moderatorNote, lang,
       );
 
       // AI SDK requires at least one message; seed with a starter if empty
-      const lang = state.language;
       const debaterLabel = persona.id === 'ai1' ? t(lang, 'debater1') : t(lang, 'debater2');
       const seedMsg = lang === 'en'
         ? `Please begin your debate as ${debaterLabel}.`
@@ -89,7 +90,7 @@ export function DebateLayout() {
       dispatch({ type: 'SET_STREAMING', isStreaming: false });
       dispatch({ type: 'SET_SPEAKER', personaId: null });
     }
-  }, [state.topic, state.currentRound, state.messages, state.moderatorNote, dispatch]);
+  }, [state.topic, state.currentRound, state.messages, state.moderatorNote, state.language, dispatch]);
 
   // Auto-advance debate with 2-second pauses between speakers and before scoring
   useEffect(() => {
