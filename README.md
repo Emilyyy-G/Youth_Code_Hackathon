@@ -1,4 +1,3 @@
-
 # The Ultimate Objective Arbiter
 **Tagline: Stripping away AI's "neutral" mask to ignite a battlefield of logic and bias.**
 
@@ -9,7 +8,7 @@ With a human-in-the-loop interactive system and real-time audience feedback mech
 
 ## ✨ Core Key Features
 1. **Polarized Extreme AI Debater Agents**
-Two independent AI instances with completely opposite worldview, personality, stance and rhetoric styles (e.g., Radical Skeptic VS Blind Optimist, Pragmatic Realist VS Idealistic Utopian). Each agent sticks firmly to its preset stance without neutral compromise throughout the debate.
+Two independent AI instances with completely opposite worldview, personality, stance and rhetoric styles. Each agent sticks firmly to its preset stance without neutral compromise throughout the debate.
 
 2. **Real-Time Audience Feedback Dynamic Prompt Loop**
 Spectators can like/dislike each argument instantly. User feedback data is injected into the agent’s system prompt in real time, dynamically adjusting the AI’s aggression level, tone sharpness, argument structure and logical angle without restarting the conversation.
@@ -27,7 +26,7 @@ Built-in dynamic UI visualization modules: real-time tension meter animation, ar
 - **Frontend Framework**: Next.js 14 (App Router)
 - **UI & Visual Components**: Tailwind CSS + Framer Motion (dynamic battle animations, real-time feedback UI)
 - **Backend Runtime**: Node.js + Next.js API Routes (full-stack monorepo architecture)
-- **AI LLM Engine**: DeepSeek API / Claude API
+- **AI LLM Engine**: DeepSeek API 
 - **Data Validation & Schema Constraint**: Zod (enforce structured JSON output from LLMs for judge scoring)
 - **State Management**: Client-side React state + Server-side persistent debate context
 
