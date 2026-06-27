@@ -2,6 +2,8 @@
 
 An AI-powered interactive debate platform. Watch two AI debaters clash over hot topics, or jump into human-vs-AI mode and challenge the debaters yourself!
 
+🔗 **Live Demo**: [https://youth-code-hackathon.vercel.app](https://youth-code-hackathon.vercel.app)
+
 ## Features
 
 - **AI vs AI Debate** — Two AI debaters with opposing stances argue on a chosen topic
