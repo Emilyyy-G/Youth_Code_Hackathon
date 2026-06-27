@@ -147,7 +147,7 @@ export function Dashboard({ takeoverTarget, onConfirmTakeOver, onCancelTakeOver 
 
               <div className="flex flex-col items-center gap-2">
                 <div className={`text-4xl font-extrabold transition-colors ${
-                  score > 0 ? 'text-blue-500' : score < 0 ? 'text-rose-500' : 'text-zinc-400'
+                  score < 0 ? 'text-blue-500' : score > 0 ? 'text-rose-500' : 'text-zinc-400'
                 }`}>
                   {score > 0 ? `+${score}` : score}
                 </div>
@@ -160,9 +160,9 @@ export function Dashboard({ takeoverTarget, onConfirmTakeOver, onCancelTakeOver 
                   value={score}
                   onChange={e => setScore(Number(e.target.value))}
                   className={`w-full h-2 rounded-full appearance-none cursor-pointer ${
-                    score > 0
+                    score < 0
                       ? 'accent-blue-500 bg-gradient-to-r from-blue-200 via-zinc-200 to-zinc-200 dark:from-blue-800 dark:via-zinc-700 dark:to-zinc-700'
-                      : score < 0
+                      : score > 0
                       ? 'accent-rose-500 bg-gradient-to-r from-zinc-200 via-zinc-200 to-rose-200 dark:from-zinc-700 dark:via-zinc-700 dark:to-rose-800'
                       : 'accent-zinc-400 bg-zinc-200 dark:bg-zinc-700'
                   }`}
