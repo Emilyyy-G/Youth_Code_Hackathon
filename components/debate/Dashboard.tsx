@@ -159,12 +159,18 @@ export function Dashboard({ takeoverTarget, onConfirmTakeOver, onCancelTakeOver 
                   step={1}
                   value={score}
                   onChange={e => setScore(Number(e.target.value))}
-                  className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-blue-500"
+                  className={`w-full h-2 rounded-full appearance-none cursor-pointer ${
+                    score > 0
+                      ? 'accent-blue-500 bg-gradient-to-r from-blue-200 via-zinc-200 to-zinc-200 dark:from-blue-800 dark:via-zinc-700 dark:to-zinc-700'
+                      : score < 0
+                      ? 'accent-rose-500 bg-gradient-to-r from-zinc-200 via-zinc-200 to-rose-200 dark:from-zinc-700 dark:via-zinc-700 dark:to-rose-800'
+                      : 'accent-zinc-400 bg-zinc-200 dark:bg-zinc-700'
+                  }`}
                 />
 
-                <div className="flex justify-between w-full text-[10px] text-zinc-400">
-                  <span>{t(lang, 'conWins')}</span>
-                  <span>{t(lang, 'proWins')}</span>
+                <div className="flex justify-between w-full text-xs font-semibold">
+                  <span className="text-blue-600">{t(lang, 'proWins')}</span>
+                  <span className="text-rose-600">{t(lang, 'conWins')}</span>
                 </div>
 
                 <Button variant="primary" size="sm" className="w-full mt-1" onClick={handleScoreSubmit}>
