@@ -1,22 +1,25 @@
-import { createOpenAI } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { OpenAI } from 'openai';
+import { OpenAIStream, StreamingTextResponse } from 'ai';
 
-// 关键修正：baseURL 必须包含 /v1，且 SDK 会自动拼接 /chat/completions
-const deepseek = createOpenAI({
-    baseURL: 'https://api.deepseek.com/v1',
+const openai = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
+    baseURL: 'https://api.deepseek.com',
 });
 
 export async function POST(req: Request) {
     const { messages, system } = await req.json();
 
-    const result = await streamText({
-        // 使用 deepseek 实例，传入模型名称
-        model: deepseek('deepseek-chat'),
-        messages,
-        system,
+    const response = await openai.chat.completions.create({
+        model: 'deepseek-chat',
+        messages: [
+            { role: 'system', content: system },
+            ...messages
+        ],
+        stream: true,
         temperature: 0.8,
     });
 
-    return result.toTextStreamResponse();
+    // 使用 ai SDK 提供的转换器处理流
+    const stream = OpenAIStream(response);
+    return new StreamingTextResponse(stream);
 }
