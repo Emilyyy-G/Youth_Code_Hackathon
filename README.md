@@ -1,12 +1,6 @@
-这是一份为你整合好的完整版 `README.md`，你可以直接复制并保存到项目根目录中。
-
----
-
-# The Ultimate Objective Arbiter (绝对客观裁判所)
+# The Ultimate Objective Arbiter 
 
 **"Stripping away AI's 'neutral' mask to ignite a battlefield of logic and bias."**
-
----
 
 ### 🚀 Project Overview
 
@@ -98,4 +92,4 @@ npm run dev
 
 ---
 
-*License: MIT*以下是按照你要求的顺序重新编排的 README 内容：
+
